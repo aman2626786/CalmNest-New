@@ -1,0 +1,68 @@
+[
+  {
+    "id": "video-1",
+    "type": "video",
+    "category": "Stress",
+    "title": "Guided Meditation for Stress Relief (10 Minutes)",
+    "description": "A short, guided meditation session to help you find calm and focus in just 10 minutes. Perfect for beginners.",
+    "source": "CalmTube",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1506126613408-4e05860f5b54?q=80&w=2070&auto=format&fit=crop",
+    "imageHint": "woman meditating on a rock by the water at sunset"
+  },
+  {
+    "id": "article-1",
+    "type": "article",
+    "category": "Anxiety",
+    "title": "Understanding and Managing Anxiety",
+    "description": "An in-depth article exploring the causes of anxiety and practical strategies for managing its symptoms in daily life.",
+    "source": "Wellness Weekly",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1558022285-10534fa75a83?q=80&w=1935&auto=format&fit=crop",
+    "imageHint": "a person writing in a journal with a cup of tea"
+  },
+  {
+    "id": "audio-1",
+    "type": "audio",
+    "category": "Mindfulness",
+    "title": "Mindful Breathing Exercise",
+    "description": "A simple 5-minute audio guide to practice mindful breathing, a powerful technique to ground yourself.",
+    "source": "AudioCalm",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1519824145371-2ae6a898612c?q=80&w=2070&auto=format&fit=crop",
+    "imageHint": "close up of headphones on a wooden table"
+  },
+  {
+    "id": "video-2",
+    "type": "video",
+    "category": "Stress",
+    "title": "Yoga for Relaxation",
+    "description": "Follow along with this gentle yoga routine designed to release tension from your body and calm your mind.",
+    "source": "YogaFlow",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=2120&auto=format&fit=crop",
+    "imageHint": "woman doing yoga on a beach"
+  },
+  {
+    "id": "article-2",
+    "type": "article",
+    "category": "Mindfulness",
+    "title": "The Benefits of a Digital Detox",
+    "description": "Learn how taking a break from screens can improve your mental well-being and increase your focus.",
+    "source": "Mindful Living",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1586322354912-b4a7f2c71063?q=80&w=1974&auto=format&fit=crop",
+    "imageHint": "a smartphone lying face down on a wooden table next to a plant"
+  },
+  {
+    "id": "audio-2",
+    "type": "audio",
+    "category": "Anxiety",
+    "title": "Positive Affirmations for Anxiety",
+    "description": "Listen to these positive affirmations to challenge anxious thoughts and cultivate a more positive mindset.",
+    "source": "AudioCalm",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1608403338980-3452631142d1?q=80&w=1974&auto=format&fit=crop",
+    "imageHint": "a person speaking into a microphone in a recording studio"
+  }
+]

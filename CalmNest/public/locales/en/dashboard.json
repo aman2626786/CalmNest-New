@@ -1,0 +1,19 @@
+{
+  "title": "Dashboard",
+  "moodAnalysis": "Mood Analysis",
+  "currentMood": "Current Mood",
+  "confidence": "Confidence",
+  "mentalHealthIndicators": "Mental Health Indicators",
+  "depressionSigns": "Depression Signs",
+  "anxietySigns": "Anxiety Signs",
+  "noLiveData": "No live mood data available.",
+  "goToMoodGroove": "Please go to the <1>Mood Groove</1> page and start the camera to see your live analysis here.",
+  "screeningHistory": "Screening History",
+  "downloadPdf": "Download PDF",
+  "testPerformance": "Test Performance",
+  "testsTaken": "Tests Taken",
+  "notLoggedIn": "You are not logged in.",
+  "loginToView": "Please log in to view your dashboard.",
+  "noData": "No data available yet.",
+  "startActivities": "Start taking tests or use Mood Groove to see your dashboard."
+}

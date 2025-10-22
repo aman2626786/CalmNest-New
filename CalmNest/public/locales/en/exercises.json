@@ -1,0 +1,74 @@
+{
+  "title": "Quick Relief Exercises",
+  "subtitle": "Find your center with these guided exercises designed to calm your mind and body in minutes.",
+  "startExercise": "Start Exercise",
+  "followInstructions": "Follow the instructions to find your calm.",
+  "howItWorks": "How it Works",
+  "steps": "Steps",
+  "box-breathing": {
+    "title": "Box Breathing",
+    "description": "A simple technique to calm your nervous system and reduce stress.",
+    "science": "Evens out breath pace, stimulating the vagus nerve to lower heart rate and blood pressure.",
+    "steps": ["Inhale for 4s", "Hold for 4s", "Exhale for 4s", "Hold for 4s"],
+    "cycle": [
+      { "instruction": "Inhale", "duration": 4 },
+      { "instruction": "Hold", "duration": 4 },
+      { "instruction": "Exhale", "duration": 4 },
+      { "instruction": "Hold", "duration": 4 }
+    ]
+  },
+  "478-breathing": {
+    "title": "4-7-8 Breathing",
+    "description": "Known as the \"relaxing breath,\" it helps with anxiety and sleep.",
+    "science": "Acts as a natural tranquilizer for the nervous system by increasing oxygen in the bloodstream.",
+    "steps": ["Inhale for 4s", "Hold for 7s", "Exhale for 8s"],
+    "cycle": [
+      { "instruction": "Inhale", "duration": 4 },
+      { "instruction": "Hold", "duration": 7 },
+      { "instruction": "Exhale", "duration": 8 }
+    ]
+  },
+  "54321-grounding": {
+    "title": "5-4-3-2-1 Grounding",
+    "description": "Pulls you out of anxious thoughts by focusing on your senses.",
+    "science": "Redirects focus from internal distress to the external environment, interrupting overwhelming thoughts.",
+    "steps": ["See 5 things", "Feel 4 things", "Hear 3 things", "Smell 2 things", "Taste 1 thing"],
+    "cycle": [
+      { "instruction": "Acknowledge 5 things you can SEE" },
+      { "instruction": "Acknowledge 4 things you can TOUCH" },
+      { "instruction": "Acknowledge 3 things you can HEAR" },
+      { "instruction": "Acknowledge 2 things you can SMELL" },
+      { "instruction": "Acknowledge 1 thing you can TASTE" }
+    ]
+  },
+  "pmr": {
+    "title": "Progressive Muscle Relaxation",
+    "description": "Reduces anxiety and physical tension by tensing and relaxing muscle groups.",
+    "science": "Teaches the body the difference between tension and relaxation, promoting a state of deep calm.",
+    "steps": ["Tense muscles for 5s", "Release and relax for 10s", "Repeat for different muscle groups"],
+    "cycle": [
+      { "instruction": "Tense your feet", "duration": 5 },
+      { "instruction": "Release your feet", "duration": 10 },
+      { "instruction": "Tense your legs", "duration": 5 },
+      { "instruction": "Release your legs", "duration": 10 },
+      { "instruction": "Tense your torso", "duration": 5 },
+      { "instruction": "Release your torso", "duration": 10 },
+      { "instruction": "Tense your arms", "duration": 5 },
+      { "instruction": "Release your arms", "duration": 10 },
+      { "instruction": "Tense your face", "duration": 5 },
+      { "instruction": "Release your face", "duration": 10 }
+    ]
+  },
+  "alternate-nostril": {
+    "title": "Alternate Nostril Breathing",
+    "description": "Balances the brain hemispheres, promoting clarity and calm.",
+    "science": "Nadi Shodhana is said to harmonize the left and right brain hemispheres, calming the mind.",
+    "steps": ["Inhale left", "Exhale right", "Inhale right", "Exhale left"],
+    "cycle": [
+      { "instruction": "Close right nostril, INHALE left", "duration": 4 },
+      { "instruction": "Close left, EXHALE right", "duration": 6 },
+      { "instruction": "INHALE right", "duration": 4 },
+      { "instruction": "Close right, EXHALE left", "duration": 6 }
+    ]
+  }
+}

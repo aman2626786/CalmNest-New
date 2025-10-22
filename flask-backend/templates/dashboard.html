@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalmNest Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .chart-container { width: 80%; margin: 50px auto; }
+        h1, h2 { text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>CalmNest Dashboard</h1>
+
+    <div class="chart-container">
+        <h2>Self-Check Performance</h2>
+        <canvas id="selfCheckChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <h2>Mood Groove Analysis</h2>
+        <canvas id="moodGrooveChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <h2>Breathing Exercises</h2>
+        <ul>
+            {% for log in breathing_logs %}
+                <li>{{ log.exercise_name }} for {{ log.duration_seconds }} seconds on {{ log.timestamp.strftime('%Y-%m-%d') }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        // Self-Check Chart (Line Chart)
+        const selfCheckCtx = document.getElementById('selfCheckChart').getContext('2d');
+        new Chart(selfCheckCtx, {
+            type: 'line',
+            data: {
+                labels: {{ self_check_labels|tojson }},
+                datasets: [{
+                    label: 'Performance (1=Correct, 0=Incorrect)',
+                    data: {{ self_check_values|tojson }},
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            }
+        });
+
+        // Mood Groove Chart (Bar Chart)
+        const moodGrooveCtx = document.getElementById('moodGrooveChart').getContext('2d');
+        const moodData = {{ mood_values|tojson }};
+        const moodCounts = moodData.reduce((acc, mood) => {
+            acc[mood] = (acc[mood] || 0) + 1;
+            return acc;
+        }, {});
+
+        new Chart(moodGrooveCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(moodCounts),
+                datasets: [{
+                    label: 'Emotion Count',
+                    data: Object.values(moodCounts),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            }
+        });
+    </script>
+</body>
+</html>

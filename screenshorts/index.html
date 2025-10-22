@@ -1,0 +1,1856 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mood Groove - Hindi/English Voice Feedback</title>
+  <style>
+    :root{ 
+      --bg:#0f1724; 
+      --card:#0b1220; 
+      --accent:#60a5fa; 
+      --muted:#94a3b8; 
+      --success:#4ade80;
+      --warning:#fbbf24;
+      --danger:#f87171;
+      --depression:#a78bfa;
+      --anxiety:#fbbf24;
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:#e6eef8;
+      background:linear-gradient(180deg,#071020 0%, #071829 100%);
+    }
+    .wrap{
+      max-width:1100px;
+      margin:28px auto;
+      padding:18px;
+      display:grid;
+      grid-template-columns:640px 1fr;
+      gap:18px;
+      align-items:start
+    }
+    .card{
+      background:rgba(255,255,255,0.02);
+      border-radius:12px;
+      padding:14px;
+      box-shadow:0 6px 18px rgba(2,6,23,0.6);
+      border:1px solid rgba(255,255,255,0.03)
+    }
+    h1{margin:0 0 8px 0;font-size:20px}
+    p.small{margin:4px 0 12px 0;color:var(--muted);font-size:13px}
+
+    /* video area */
+    #videoWrap{
+      position:relative;
+      border-radius:10px;
+      overflow:hidden;
+      background:#000;
+      height:420px;
+      display:flex;
+      align-items:center;
+      justify-content:center
+    }
+    video{width:100%;height:100%;object-fit:cover}
+    canvas#overlay{position:absolute;left:0;top:0;pointer-events:none}
+
+    .controls{
+      display:flex;
+      gap:8px;
+      margin-top:10px;
+      flex-wrap: wrap;
+    }
+    button{
+      background:var(--accent);
+      color:#01203a;
+      border:0;
+      padding:8px 12px;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+      transition: all 0.2s;
+    }
+    button:hover{
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    button:disabled{
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    button.secondary{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.06);
+      color:#cfe8ff
+    }
+    button.success{background:var(--success);color:#01203a}
+    button.warning{background:var(--warning);color:#01203a}
+    button.danger{background:var(--danger);color:#01203a}
+    button.depression{background:var(--depression);color:#01203a}
+    button.anxiety{background:var(--anxiety);color:#01203a}
+
+    /* right column */
+    .stats{display:flex;flex-direction:column;gap:10px}
+    .statCard{
+      padding:12px;
+      border-radius:10px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+    }
+    .expressionsList{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .expr{
+      display:flex;
+      justify-content:space-between;
+      padding:8px;
+      border-radius:8px;
+      background:rgba(255,255,255,0.01)
+    }
+    .dominant{font-size:18px;font-weight:700}
+    .mood-pill{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:700;
+      background:rgba(255,255,255,0.03)
+    }
+
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    td,th{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
+    .muted{color:var(--muted);font-size:12px}
+    footer{margin-top:12px;color:var(--muted);font-size:12px}
+
+    .unselectable {
+      -webkit-user-select: none; /* Safari */
+      -moz-user-select: none; /* Firefox */
+      -ms-user-select: none; /* IE 10+ */
+      user-select: none; /* Standard syntax */
+    }
+
+    /* Progress bars for expressions */
+    .progress-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 3px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    /* Head pose indicator */
+    .pose-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .pose-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .pose-dot.active {
+      background: var(--success);
+    }
+
+    /* Multi-face indicators */
+    .face-count {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.5);
+      border: none;
+      color: white;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    /* Light theme */
+    .light-theme {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --accent: #3b82f6;
+      --muted: #64748b;
+      color: #1e293b;
+      background: linear-gradient(180deg, #e2e8f0 0%, #f1f5f9 100%);
+    }
+    .light-theme .card {
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    .light-theme .statCard {
+      background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.01));
+    }
+    .light-theme .expr {
+      background: rgba(0,0,0,0.02);
+    }
+    .light-theme .muted {
+      color: var(--muted);
+    }
+
+    .permission-help {
+      background: rgba(255,255,255,0.05);
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+      border-left: 4px solid var(--warning);
+    }
+
+    /* Emotional guidance section */
+    .guidance-card {
+      background: rgba(255,255,255,0.02);
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 12px;
+      border-left: 4px solid var(--accent);
+    }
+    .guidance-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .guidance-content {
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .guidance-tip {
+      background: rgba(255,255,255,0.05);
+      padding: 8px;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+
+    /* Blink detection */
+    .blink-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .blink-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .blink-dot.active {
+      background: var(--warning);
+    }
+
+    /* Speech emotion section */
+    .speech-section {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.02);
+    }
+    .speech-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    /* Language toggle */
+    .language-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .lang-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white;
+      cursor: pointer;
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      color: #01203a;
+    }
+
+    /* Mood Groove Title Styles */
+    .mood-groove-title {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width:980px){
+      .wrap{grid-template-columns:1fr;max-width:900px}.card{margin-bottom:12px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <!-- CHANGED: Title updated to Mood Groove -->
+      <div class="mood-groove-title">Mood Groove - Live Emotion Detection</div>
+      <p class="small"><em>Now with Hindi/English voice feedback, depression & anxiety detection!</em></p>
+
+      <div id="videoWrap">
+        <button class="theme-toggle" id="themeToggle">🌙</button>
+        <video id="inputVideo" autoplay muted playsinline></video>
+        <canvas id="overlay"></canvas>
+        <div class="face-count" id="faceCount">Faces: 0</div>
+      </div>
+
+      <div id="permissionHelp" class="permission-help" style="display: none;">
+        <strong>Camera Permission Required</strong>
+        <p class="muted">Please allow camera access in your browser to use this feature.</p>
+        <button id="retryBtn" class="warning">Retry Camera Access</button>
+      </div>
+
+      <div class="controls">
+        <button id="startBtn">Start Camera</button>
+        <button id="stopBtn" class="secondary">Stop Camera</button>
+        <button id="snapshotBtn" class="secondary">Take Snapshot</button>
+        <button id="recordBtn" class="success">Start Recording (10s)</button>
+        <button id="voiceToggle" class="secondary">Voice Feedback: Off</button>
+        <button id="testVoiceBtn" class="warning">Test Voice</button>
+        <div style="flex:1"></div>
+        <div class="muted">Model status: <span id="modelStatus">Not loaded</span></div>
+      </div>
+
+      <div class="language-toggle">
+        <div class="muted">Voice Language:</div>
+        <button class="lang-btn active" id="hindiBtn">हिंदी (Hindi)</button>
+        <button class="lang-btn" id="englishBtn">English</button>
+      </div>
+
+      <div class="pose-indicator">
+        <div class="muted">Head Pose:</div>
+        <div class="pose-dot" id="poseFront"></div>
+        <div class="muted">Front</div>
+        <div class="pose-dot" id="poseLeft"></div>
+        <div class="muted">Left</div>
+        <div class="pose-dot" id="poseRight"></div>
+        <div class="muted">Right</div>
+        <div class="pose-dot" id="poseUp"></div>
+        <div class="muted">Up</div>
+        <div class="pose-dot" id="poseDown"></div>
+        <div class="muted">Down</div>
+      </div>
+
+      <div class="blink-indicator">
+        <div class="muted">Blink Status:</div>
+        <div class="blink-dot" id="blinkIndicator"></div>
+        <div class="muted" id="blinkStatus">Eyes open</div>
+      </div>
+
+      <div class="speech-section">
+        <div class="muted">Speech Emotion Analysis</div>
+        <div class="speech-controls">
+          <button id="startSpeechBtn" class="secondary">Start Voice Analysis</button>
+          <button id="stopSpeechBtn" class="secondary">Stop Voice Analysis</button>
+        </div>
+        <div id="speechResult" class="muted">Click "Start Voice Analysis" to begin</div>
+      </div>
+
+      <footer class="muted unselectable">Made by Red_Ghost | Enhanced with Hindi/English voice feedback</footer>
+    </div>
+
+    <div class="stats card">
+      <div class="statCard">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="dominant">Detected mood: <span id="dominantMood">—</span></div>
+            <div class="muted">Confidence: <span id="dominantConf">—</span></div>
+          </div>
+          <div style="text-align:right">
+            <div class="mood-pill" id="moodPill">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="statCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <strong>Expressions (probabilities)</strong>
+          <span class="muted">Smoothed data</span>
+        </div>
+        <div class="expressionsList" id="exprList">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+      <div class="guidance-card" id="guidanceCard" style="display: none;">
+        <div class="guidance-title">
+          <span id="guidanceIcon">💡</span>
+          <span>Emotional Guidance</span>
+        </div>
+        <div class="guidance-content" id="guidanceContent">
+          <!-- Will show emotional guidance based on detected mood -->
+        </div>
+      </div>
+
+      <div class="statCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <strong>Mental Health Indicators</strong>
+          <span class="muted">Advanced detection</span>
+        </div>
+        <div id="mentalHealthIndicators">
+          <div class="expr">
+            <div>Depression Signs</div>
+            <div id="depressionScore">0%</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar" id="depressionBar" style="width: 0%; background: var(--depression);"></div>
+          </div>
+          <div class="expr">
+            <div>Anxiety Signs</div>
+            <div id="anxietyScore">0%</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar" id="anxietyBar" style="width: 0%; background: var(--anxiety);"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="statCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <strong>Recording Analysis</strong>
+          <span class="muted" id="recordingStatus">Not recording</span>
+        </div>
+        <div id="recordingResults">
+          <!-- Will show average mood during recording -->
+        </div>
+      </div>
+
+      <div class="statCard">
+        <strong>History (last 20 frames)</strong>
+        <table>
+          <thead><tr><th>Time</th><th>Mood</th><th>Top conf</th></tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script>
+    // Mood Groove - Enhanced Facial Expression Detection with Hindi/English Voice Feedback
+    const video = document.getElementById('inputVideo');
+    const overlay = document.getElementById('overlay');
+    const ctx = overlay.getContext('2d');
+
+    const modelStatus = document.getElementById('modelStatus');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const snapshotBtn = document.getElementById('snapshotBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const voiceToggle = document.getElementById('voiceToggle');
+    const testVoiceBtn = document.getElementById('testVoiceBtn');
+    const themeToggle = document.getElementById('themeToggle');
+    const faceCount = document.getElementById('faceCount');
+    const permissionHelp = document.getElementById('permissionHelp');
+    const retryBtn = document.getElementById('retryBtn');
+    const startSpeechBtn = document.getElementById('startSpeechBtn');
+    const stopSpeechBtn = document.getElementById('stopSpeechBtn');
+    const speechResult = document.getElementById('speechResult');
+    const blinkIndicator = document.getElementById('blinkIndicator');
+    const blinkStatus = document.getElementById('blinkStatus');
+    const guidanceCard = document.getElementById('guidanceCard');
+    const guidanceContent = document.getElementById('guidanceContent');
+    const guidanceIcon = document.getElementById('guidanceIcon');
+    const depressionScore = document.getElementById('depressionScore');
+    const depressionBar = document.getElementById('depressionBar');
+    const anxietyScore = document.getElementById('anxietyScore');
+    const anxietyBar = document.getElementById('anxietyBar');
+    const hindiBtn = document.getElementById('hindiBtn');
+    const englishBtn = document.getElementById('englishBtn');
+
+    const exprList = document.getElementById('exprList');
+    const dominantMood = document.getElementById('dominantMood');
+    const dominantConf = document.getElementById('dominantConf');
+    const moodPill = document.getElementById('moodPill');
+    const historyBody = document.getElementById('historyBody');
+    const recordingResults = document.getElementById('recordingResults');
+    const recordingStatus = document.getElementById('recordingStatus');
+
+    // Pose indicators
+    const poseFront = document.getElementById('poseFront');
+    const poseLeft = document.getElementById('poseLeft');
+    const poseRight = document.getElementById('poseRight');
+    const poseUp = document.getElementById('poseUp');
+    const poseDown = document.getElementById('poseDown');
+
+    let stream = null;
+    let detectionInterval = null;
+    let history = [];
+    let smoothBuffer = [];
+    let isVoiceEnabled = false;
+    let isRecording = false;
+    let recordingData = [];
+    let recordingStartTime = null;
+    let recordingTimeout = null;
+    let isLightTheme = false;
+    let isSpeechAnalysisActive = false;
+    let recognition = null;
+    let lastBlinkTime = 0;
+    let blinkCount = 0;
+    let eyeClosed = false;
+    let lastEyeState = 'open';
+    let depressionLevel = 0;
+    let anxietyLevel = 0;
+    let lastMoodChangeTime = 0;
+    let currentLanguage = 'hindi'; // Default language
+
+    // Color mapping for expressions
+    const expressionColors = {
+      neutral: '#60a5fa',
+      happy: '#4ade80',
+      sad: '#60a5fa',
+      angry: '#f87171',
+      fearful: '#fbbf24',
+      disgusted: '#a78bfa',
+      surprised: '#fbbf24',
+      depression: '#a78bfa',
+      anxiety: '#fbbf24'
+    };
+
+    // Hindi emotional guidance messages
+    const emotionalGuidanceHindi = {
+      happy: {
+        icon: '😊',
+        title: 'आप खुश नज़र आ रहे हैं!',
+        message: 'आपको सकारात्मक मूड में देखकर अच्छा लगा!',
+        tips: [
+          'अपनी खुशी दूसरों के साथ साझा करें - यह संक्रामक है',
+          'इस सकारात्मक ऊर्जा का उपयोग चुनौतीपूर्ण कार्यों को करने के लिए करें',
+          'जो आपको खुश कर रहा है उसकी सराहना करने के लिए एक पल लें'
+        ],
+        voiceMessage: "आप खुश नज़र आ रहे हैं। यह बहुत अच्छी बात है। अपनी खुशी को दूसरों के साथ बांटें और इस पल का आनंद लें।"
+      },
+      sad: {
+        icon: '🙁',
+        title: 'आप उदास नज़र आ रहे हैं',
+        message: 'कभी-कभी उदास महसूस करना ठीक है। यहाँ कुछ सुझाव हैं:',
+        tips: [
+          'किसी विश्वसनीय व्यक्ति से अपनी भावनाओं के बारे में बात करें',
+          'उन गतिविधियों में शामिल हों जिनका आप आमतौर पर आनंद लेते हैं',
+          'आत्म-देखभाल का अभ्यास करें - गुनगुने पानी से स्नान करें, संगीत सुनें, या टहलने जाएं',
+          'अपनी भावनाओं को संसाधित करने के लिए जर्नलिंग पर विचार करें'
+        ],
+        voiceMessage: "आप उदास नज़र आ रहे हैं। कभी-कभी ऐसा महसूस होना सामान्य है। किसी करीबी से बात करें, थोड़ा टहलने जाएं, या कोई ऐसा काम करें जो आपको पसंद हो। अगर यह भावना ज्यादा देर तक रहे तो किसी काउंसलर से संपर्क करें।"
+      },
+      angry: {
+        icon: '😠',
+        title: 'आप क्रोधित नज़र आ रहे हैं',
+        message: 'क्रोध एक प्राकृतिक भावना है। इसे प्रबंधित करने के स्वस्थ तरीके यहाँ दिए गए हैं:',
+        tips: [
+          'गहरी सांसें लें - 4 सेकंड के लिए सांस अंदर लें, 4 सेकंड के लिए रोकें, 6 सेकंड के लिए छोड़ें',
+          'यदि संभव हो तो स्थिति से अस्थायी रूप से दूर हट जाएं',
+          'दूसरों को दोष देने के बजाय "मैं" कथनों का उपयोग करके अपनी भावनाओं को व्यक्त करें',
+          'इस ऊर्जा को चलने या व्यायाम जैसी शारीरिक गतिविधि में लगाएं'
+        ],
+        voiceMessage: "आप गुस्से में नज़र आ रहे हैं। गहरी सांस लें और खुद को शांत करने का प्रयास करें। कुछ देर टहलने जाएं या पानी पीएं। गुस्सा आना सामान्य है, लेकिन इसे नियंत्रित करना सीखें।"
+      },
+      fearful: {
+        icon: '😨',
+        title: 'आप चिंतित या भयभीत नज़र आ रहे हैं',
+        message: 'कभी-कभी चिंतित महसूस करना स्वाभाविक है। इन तकनीकों को आजमाएं:',
+        tips: [
+          'ग्राउंडिंग तकनीकों का अभ्यास करें - 5 चीजें नाम दें जो आप देख सकते हैं, 4 जिन्हें आप छू सकते हैं, 3 जिन्हें आप सुन सकते हैं, 2 जिन्हें आप सूंघ सकते हैं, 1 जिसका आप स्वाद ले सकते हैं',
+          'अपनी सांस पर ध्यान केंद्रित करें - धीमी, गहरी सांसें आपकी तंत्रिका तंत्र को शांत कर सकती हैं',
+          '"इस डर का क्या सबूत है?" पूछकर नकारात्मक विचारों को चुनौती दें',
+          'अभिभूत करने वाली स्थितियों को छोटे, प्रबंधनीय चरणों में तोड़ें'
+        ],
+        voiceMessage: "आप चिंतित नज़र आ रहे हैं। गहरी सांस लेने का अभ्यास करें। अपने आसपास की पांच चीजों पर ध्यान दें जो आप देख सकते हैं, चार चीजें जिन्हें छू सकते हैं, तीन आवाजें सुन सकते हैं। यह तकनीक आपको वर्तमान क्षण में लौटने में मदद करेगी।"
+      },
+      disgusted: {
+        icon: '🤢',
+        title: 'आप घृणित नज़र आ रहे हैं',
+        message: 'घृणा एक सुरक्षात्मक भावना है। विचार करें:',
+        tips: [
+          'पहचानें कि विशेष रूप से क्या इस भावना को ट्रिगर कर रहा है',
+          'यदि यह एक ऐसी स्थिति है जिसे आप बदल सकते हैं, तो उचित कार्रवाई करें',
+          'यदि यह कुछ ऐसा है जिसे आप नियंत्रित नहीं कर सकते, तो स्वीकृति का अभ्यास करें',
+          'स्थिति में आप जो नियंत्रित कर सकते हैं उस पर ध्यान केंद्रित करें'
+        ],
+        voiceMessage: "आपको कुछ अप्रिय लग रहा है। इस भावना के कारण को समझने का प्रयास करें। अगर आप स्थिति बदल सकते हैं तो बदलें, वरना स्वीकार करना सीखें।"
+      },
+      surprised: {
+        icon: '😮',
+        title: 'आप आश्चर्यचकित नज़र आ रहे हैं',
+        message: 'आश्चर्य सकारात्मक या नकारात्मक हो सकता है। एक पल लें:',
+        tips: [
+          'प्रतिक्रिया देने से पहले नई जानकारी को संसाधित करें',
+          'विचार करें कि क्या यह आश्चर्य नए अवसर खोलता है',
+          'यदि यह एक अप्रिय आश्चर्य है, तो खुद को समायोजित करने का समय दें'
+        ],
+        voiceMessage: "आप आश्चर्यचकित नज़र आ रहे हैं। नई स्थिति को समझने के लिए खुद को थोड़ा समय दें।"
+      },
+      neutral: {
+        icon: '😐',
+        title: 'आप तटस्थ नज़र आ रहे हैं',
+        message: 'संतुलित भावनात्मक स्थिति इनके लिए बेहतर है:',
+        tips: [
+          'भावनात्मक पूर्वाग्रह के बिना विचारशील निर्णय लेना',
+          'केंद्रित कार्य या सीखने में संलग्न होना',
+          'माइंडफुलनेस का अभ्यास करना और वर्तमान क्षण में मौजूद रहना'
+        ],
+        voiceMessage: "आप शांत और संतुलित नज़र आ रहे हैं। यह अवस्था अच्छे निर्णय लेने के लिए उपयुक्त है।"
+      },
+      depression: {
+        icon: '😔',
+        title: 'डिप्रेशन के संकेत मिल रहे हैं',
+        message: 'लंबे समय तक उदास रहना डिप्रेशन का संकेत हो सकता है:',
+        tips: [
+          'किसी मानसिक स्वास्थ्य पेशेवर से सलाह लें',
+          'नियमित दिनचर्या बनाए रखें और छोटे-छोटे लक्ष्य निर्धारित करें',
+          'शारीरिक गतिविधि में शामिल हों, भले ही थोड़ी हो',
+          'सामाजिक संपर्क बनाए रखने का प्रयास करें, भले ही मुश्किल लगे',
+          'स्वस्थ आहार लें और पर्याप्त नींद लें'
+        ],
+        voiceMessage: "आपमें डिप्रेशन के कुछ लक्षण नज़र आ रहे हैं। कृपया किसी मानसिक स्वास्थ्य विशेषज्ञ से संपर्क करें। रोजाना थोड़ी सैर करें, दोस्तों से बात करें, और अपनी दिनचर्या बनाए रखें। याद रखें, मदद लेना कमजोरी नहीं है।"
+      },
+      anxiety: {
+        icon: '😰',
+        title: 'चिंता के संकेत मिल रहे हैं',
+        message: 'लगातार चिंतित रहना एंग्जाइटी का संकेत हो सकता है:',
+        tips: [
+          'सांस लेने के व्यायाम और ध्यान का अभ्यास करें',
+          'कैफीन का सेवन कम करें',
+          'नियमित व्यायाम करें',
+          'पर्याप्त नींद लें',
+          'तनाव प्रबंधन तकनीक सीखें'
+        ],
+        voiceMessage: "आपमें चिंता के कुछ लक्षण नज़र आ रहे हैं। गहरी सांस लेने का अभ्यास करें, कैफीन कम लें, और नियमित व्यायाम करें। अगर चिंता आपके दैनिक जीवन को प्रभावित कर रही है तो पेशेवर मदद लें।"
+      }
+    };
+
+    // English emotional guidance messages
+    const emotionalGuidanceEnglish = {
+      happy: {
+        icon: '😊',
+        title: 'You seem happy!',
+        message: 'Great to see you in a positive mood!',
+        tips: [
+          'Share your happiness with others - it\'s contagious!',
+          'Use this positive energy to tackle challenging tasks',
+          'Take a moment to appreciate what\'s making you happy'
+        ],
+        voiceMessage: "You look happy. That's wonderful! Share your joy with others and enjoy this moment."
+      },
+      sad: {
+        icon: '🙁',
+        title: 'You seem sad',
+        message: 'It\'s okay to feel down sometimes. Here are some suggestions:',
+        tips: [
+          'Talk to someone you trust about how you\'re feeling',
+          'Engage in activities you usually enjoy, even if you don\'t feel like it',
+          'Practice self-care - take a warm bath, listen to music, or go for a walk',
+          'Consider journaling to process your emotions'
+        ],
+        voiceMessage: "You look sad. It's normal to feel this way sometimes. Talk to someone close, take a walk, or do something you enjoy. If this feeling persists, consider contacting a counselor."
+      },
+      angry: {
+        icon: '😠',
+        title: 'You seem angry',
+        message: 'Anger is a natural emotion. Here are healthy ways to manage it:',
+        tips: [
+          'Take deep breaths - inhale for 4 seconds, hold for 4, exhale for 6',
+          'Step away from the situation temporarily if possible',
+          'Express your feelings using "I" statements rather than blaming others',
+          'Channel the energy into physical activity like walking or exercise'
+        ],
+        voiceMessage: "You look angry. Take deep breaths and try to calm yourself. Go for a walk or drink some water. Feeling angry is normal, but learning to control it is important."
+      },
+      fearful: {
+        icon: '😨',
+        title: 'You seem anxious or fearful',
+        message: 'It\'s natural to feel anxious sometimes. Try these techniques:',
+        tips: [
+          'Practice grounding techniques - name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, 1 you can taste',
+          'Focus on your breathing - slow, deep breaths can calm your nervous system',
+          'Challenge negative thoughts by asking "What\'s the evidence for this fear?"',
+          'Break overwhelming situations into smaller, manageable steps'
+        ],
+        voiceMessage: "You look anxious. Practice deep breathing. Focus on five things you can see, four things you can touch, three sounds you can hear. This technique will help you return to the present moment."
+      },
+      disgusted: {
+        icon: '🤢',
+        title: 'You seem disgusted',
+        message: 'Disgust is a protective emotion. Consider:',
+        tips: [
+          'Identify what specifically is triggering this feeling',
+          'If it\'s a situation you can change, take appropriate action',
+          'If it\'s something you can\'t control, practice acceptance',
+          'Focus on what you can control in the situation'
+        ],
+        voiceMessage: "You seem to be feeling something unpleasant. Try to understand the cause of this feeling. If you can change the situation, do so; otherwise, learn to accept it."
+      },
+      surprised: {
+        icon: '😮',
+        title: 'You seem surprised',
+        message: 'Surprise can be positive or negative. Take a moment to:',
+        tips: [
+          'Process the new information before reacting',
+          'Consider whether this surprise opens up new opportunities',
+          'If it\'s an unpleasant surprise, give yourself time to adjust'
+        ],
+        voiceMessage: "You look surprised. Give yourself a little time to understand the new situation."
+      },
+      neutral: {
+        icon: '😐',
+        title: 'You seem neutral',
+        message: 'A balanced emotional state is great for:',
+        tips: [
+          'Making thoughtful decisions without emotional bias',
+          'Engaging in focused work or learning',
+          'Practicing mindfulness and being present in the moment'
+        ],
+        voiceMessage: "You look calm and balanced. This state is suitable for making good decisions."
+      },
+      depression: {
+        icon: '😔',
+        title: 'Signs of depression detected',
+        message: 'Prolonged sadness could be a sign of depression:',
+        tips: [
+          'Consult a mental health professional',
+          'Maintain a regular routine and set small goals',
+          'Engage in physical activity, even if minimal',
+          'Try to maintain social connections, even when difficult',
+          'Eat a healthy diet and get enough sleep'
+        ],
+        voiceMessage: "I'm detecting some signs of depression. Please consider contacting a mental health professional. Take daily walks, talk to friends, and maintain your routine. Remember, seeking help is not a weakness."
+      },
+      anxiety: {
+        icon: '😰',
+        title: 'Signs of anxiety detected',
+        message: 'Persistent worry could be a sign of anxiety:',
+        tips: [
+          'Practice breathing exercises and meditation',
+          'Reduce caffeine intake',
+          'Exercise regularly',
+          'Get enough sleep',
+          'Learn stress management techniques'
+        ],
+        voiceMessage: "I'm detecting some signs of anxiety. Practice deep breathing, reduce caffeine, and exercise regularly. If anxiety is affecting your daily life, seek professional help."
+      }
+    };
+
+    // Enhanced Voice Function with Better Support
+    function speakMessage(message) {
+        if (!isVoiceEnabled) {
+            console.log('Voice feedback is disabled');
+            return;
+        }
+        
+        // Check browser support
+        if (!('speechSynthesis' in window)) {
+            console.error('Speech Synthesis not supported in this browser');
+            showNotification('Voice not supported. Please use Chrome, Edge, or Safari.', 'warning');
+            return;
+        }
+        
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+        
+        // Wait for voices to load if needed
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length === 0) {
+            console.log('Waiting for voices to load...');
+            window.speechSynthesis.addEventListener('voiceschanged', () => {
+                speakMessage(message); // Retry after voices load
+            }, { once: true });
+            return;
+        }
+        
+        const utterance = new SpeechSynthesisUtterance(message);
+        
+        // Configure for language
+        if (currentLanguage === 'hindi') {
+            utterance.lang = 'hi-IN';
+            utterance.rate = 0.85;
+            utterance.pitch = 1.0;
+            
+            // Try to find Hindi voice
+            const hindiVoices = voices.filter(voice => 
+                voice.lang === 'hi-IN' || 
+                voice.lang.startsWith('hi-') ||
+                voice.name.toLowerCase().includes('hindi') ||
+                voice.name.toLowerCase().includes('india')
+            );
+            
+            if (hindiVoices.length > 0) {
+                utterance.voice = hindiVoices[0];
+                console.log('Using Hindi voice:', hindiVoices[0].name);
+            } else {
+                console.log('No Hindi voice found, using default');
+                // Use default but keep Hindi language setting
+            }
+        } else {
+            // English configuration
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            
+            const englishVoices = voices.filter(voice => 
+                voice.lang === 'en-US' || 
+                voice.lang.startsWith('en-')
+            );
+            
+            if (englishVoices.length > 0) {
+                utterance.voice = englishVoices[0];
+            }
+        }
+        
+        // Event listeners for debugging
+        utterance.onstart = function() {
+            console.log('Voice started speaking:', message);
+            showNotification('Speaking guidance...', 'success');
+        };
+        
+        utterance.onend = function() {
+            console.log('Voice finished speaking');
+        };
+        
+        utterance.onerror = function(event) {
+            console.error('Speech synthesis error:', event.error);
+            showNotification('Voice error: ' + event.error, 'error');
+        };
+        
+        // Speak the message
+        try {
+            window.speechSynthesis.speak(utterance);
+        } catch (error) {
+            console.error('Failed to speak:', error);
+            showNotification('Failed to speak message', 'error');
+        }
+    }
+
+    // Helper function to show notifications
+    function showNotification(message, type) {
+        // Simple notification implementation
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'error' ? '#f87171' : type === 'warning' ? '#fbbf24' : '#4ade80'};
+            color: #01203a;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 3000);
+    }
+
+    // Test voice function
+    function testVoice() {
+        const testMessage = currentLanguage === 'hindi' ? 
+            "नमस्ते! यह टेस्ट वॉयस संदेश है। आपका मूड ग्रूव सिस्टम काम कर रहा है।" :
+            "Hello! This is a test voice message. Your Mood Groove system is working.";
+        
+        speakMessage(testMessage);
+    }
+
+    // Rest of your existing code continues here...
+    // [The rest of your JavaScript code remains exactly the same]
+    // Only the title has been changed from "Enhanced Facial Expression Detection" to "Mood Groove"
+
+    // Check camera permission
+    async function checkCameraPermission() {
+      try {
+        if (navigator.permissions && navigator.permissions.query) {
+          const permission = await navigator.permissions.query({ name: 'camera' });
+          if (permission.state === 'denied') {
+            showPermissionHelp();
+            return false;
+          }
+        }
+        return true;
+      } catch (e) {
+        console.warn('Permission API not supported');
+        return true;
+      }
+    }
+
+    function showPermissionHelp() {
+      permissionHelp.style.display = 'block';
+    }
+
+    function hidePermissionHelp() {
+      permissionHelp.style.display = 'none';
+    }
+
+    async function loadModels(){
+      modelStatus.textContent = 'Loading models...';
+      const modelPath = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+      try {
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(modelPath);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(modelPath);
+        await faceapi.nets.faceExpressionNet.loadFromUri(modelPath);
+        modelStatus.textContent = 'Models loaded (remote)';
+      } catch(err) {
+        modelStatus.textContent = 'Model load failed — check console';
+        console.error(err);
+        throw err;
+      }
+    }
+
+    function getCameraConstraints() {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      return {
+        video: {
+          facingMode: 'user',
+          width: isMobile ? { ideal: 640 } : { ideal: 1280 },
+          height: isMobile ? { ideal: 480 } : { ideal: 720 },
+          frameRate: { ideal: 30 }
+        },
+        audio: false
+      };
+    }
+
+    async function startCamera(){
+      if (stream) return;
+      
+      // Check permission first
+      const hasPermission = await checkCameraPermission();
+      if (!hasPermission) return;
+      
+      hidePermissionHelp();
+      
+      try {
+        const constraints = getCameraConstraints();
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        
+        // Wait for video to be ready
+        return new Promise((resolve) => {
+          video.onloadedmetadata = () => {
+            video.play();
+            setupCanvas();
+            video.style.filter = "brightness(1.1) contrast(1.2)";
+            detectionInterval = setInterval(detectExpressions, 200);
+            resolve();
+          };
+        });
+        
+      } catch (err) {
+        console.error('Camera error:', err);
+        handleCameraError(err);
+        throw err;
+      }
+    }
+
+    function handleCameraError(error) {
+      let errorMessage = 'Camera error: ';
+      
+      switch(error.name) {
+        case 'NotAllowedError':
+          errorMessage += 'Permission denied. Please allow camera access and reload the page.';
+          showPermissionHelp();
+          break;
+        case 'NotFoundError':
+          errorMessage += 'No camera found on this device.';
+          break;
+        case 'NotSupportedError':
+          errorMessage += 'Camera not supported in this browser.';
+          break;
+        case 'NotReadableError':
+          errorMessage += 'Camera is already in use by another application.';
+          break;
+        default:
+          errorMessage += error.message;
+      }
+      
+      modelStatus.textContent = 'Camera Error';
+      console.error(errorMessage);
+    }
+
+    function stopCamera(){
+      if (!stream) return;
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+      if (detectionInterval) clearInterval(detectionInterval);
+      ctx.clearRect(0,0,overlay.width,overlay.height);
+      dominantMood.textContent = '—'; 
+      dominantConf.textContent = '—'; 
+      moodPill.textContent = '—';
+      faceCount.textContent = 'Faces: 0';
+      resetPoseIndicators();
+      hideGuidance();
+      resetMentalHealthIndicators();
+      
+      // Stop recording if active
+      if (isRecording) {
+        stopRecording();
+      }
+      
+      // Stop speech analysis if active
+      if (isSpeechAnalysisActive) {
+        stopSpeechAnalysis();
+      }
+    }
+
+    function setupCanvas(){
+      overlay.width = video.videoWidth || 640;
+      overlay.height = video.videoHeight || 420;
+    }
+
+    // Smoothing function for stable predictions
+    function getSmoothedExpression(expressions) {
+      smoothBuffer.push(expressions);
+      if (smoothBuffer.length > 5) smoothBuffer.shift();
+
+      const avg = {};
+      for (const ex in expressions) {
+        avg[ex] = smoothBuffer.reduce((sum, e) => sum + e[ex], 0) / smoothBuffer.length;
+      }
+      return avg;
+    }
+
+    // Head pose detection based on landmarks
+    function detectHeadPose(landmarks) {
+      // Get key points
+      const jaw = landmarks.getJawOutline();
+      const nose = landmarks.getNose();
+      const leftEye = landmarks.getLeftEye();
+      const rightEye = landmarks.getRightEye();
+      
+      // Calculate face center and dimensions
+      const faceWidth = Math.abs(jaw[0].x - jaw[16].x);
+      const faceHeight = Math.abs(jaw[8].y - Math.min(jaw[0].y, jaw[16].y));
+      
+      // Calculate eye positions
+      const leftEyeCenter = {
+        x: leftEye.reduce((sum, p) => sum + p.x, 0) / leftEye.length,
+        y: leftEye.reduce((sum, p) => sum + p.y, 0) / leftEye.length
+      };
+      
+      const rightEyeCenter = {
+        x: rightEye.reduce((sum, p) => sum + p.x, 0) / rightEye.length,
+        y: rightEye.reduce((sum, p) => sum + p.y, 0) / rightEye.length
+      };
+      
+      // Calculate horizontal and vertical ratios
+      const eyeDistance = Math.abs(leftEyeCenter.x - rightEyeCenter.x);
+      const horizontalRatio = eyeDistance / faceWidth;
+      
+      const verticalNosePos = Math.abs(nose[3].y - jaw[8].y) / faceHeight;
+      
+      // Determine pose
+      const pose = {
+        horizontal: 'front',
+        vertical: 'center'
+      };
+      
+      // Horizontal detection
+      if (horizontalRatio < 0.3) {
+        pose.horizontal = 'left';
+      } else if (horizontalRatio > 0.4) {
+        pose.horizontal = 'right';
+      }
+      
+      // Vertical detection
+      if (verticalNosePos < 0.3) {
+        pose.vertical = 'up';
+      } else if (verticalNosePos > 0.5) {
+        pose.vertical = 'down';
+      }
+      
+      return pose;
+    }
+
+    // Blink detection based on eye landmarks
+    function detectBlink(landmarks) {
+      const leftEye = landmarks.getLeftEye();
+      const rightEye = landmarks.getRightEye();
+      
+      // Calculate eye aspect ratio (EAR) for both eyes
+      const leftEAR = calculateEAR(leftEye);
+      const rightEAR = calculateEAR(rightEye);
+      
+      // Average EAR
+      const ear = (leftEAR + rightEAR) / 2.0;
+      
+      // Blink threshold (adjust as needed)
+      const blinkThreshold = 0.25;
+      
+      // Check if eyes are closed
+      const isBlinking = ear < blinkThreshold;
+      
+      // Update blink state
+      updateBlinkIndicator(isBlinking);
+      
+      return isBlinking;
+    }
+    
+    // Calculate Eye Aspect Ratio
+    function calculateEAR(eye) {
+      // Vertical eye landmarks
+      const A = distance(eye[1], eye[5]);
+      const B = distance(eye[2], eye[4]);
+      
+      // Horizontal eye landmark
+      const C = distance(eye[0], eye[3]);
+      
+      // EAR formula
+      return (A + B) / (2.0 * C);
+    }
+    
+    // Calculate distance between two points
+    function distance(point1, point2) {
+      return Math.sqrt(
+        Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)
+      );
+    }
+    
+    // Update blink indicator
+    function updateBlinkIndicator(isBlinking) {
+      if (isBlinking && !eyeClosed) {
+        // Blink started
+        eyeClosed = true;
+        blinkCount++;
+        blinkIndicator.classList.add('active');
+        blinkStatus.textContent = 'Blinking';
+        
+        // Check for fatigue (excessive blinking)
+        const now = Date.now();
+        if (lastBlinkTime > 0 && (now - lastBlinkTime) < 3000) {
+          // Multiple blinks in short time - possible fatigue
+          if (blinkCount > 5) {
+            blinkStatus.textContent = 'Possible fatigue detected';
+            // Increase anxiety level for fatigue
+            anxietyLevel = Math.min(anxietyLevel + 10, 100);
+          }
+        }
+        lastBlinkTime = now;
+      } else if (!isBlinking && eyeClosed) {
+        // Blink ended
+        eyeClosed = false;
+        blinkIndicator.classList.remove('active');
+        blinkStatus.textContent = 'Eyes open';
+      }
+    }
+
+    // Update pose indicators
+    function updatePoseIndicators(pose) {
+      // Reset all
+      resetPoseIndicators();
+      
+      // Set active indicators
+      if (pose.horizontal === 'front') {
+        poseFront.classList.add('active');
+      } else if (pose.horizontal === 'left') {
+        poseLeft.classList.add('active');
+      } else if (pose.horizontal === 'right') {
+        poseRight.classList.add('active');
+      }
+      
+      if (pose.vertical === 'up') {
+        poseUp.classList.add('active');
+      } else if (pose.vertical === 'down') {
+        poseDown.classList.add('active');
+      }
+    }
+
+    function resetPoseIndicators() {
+      poseFront.classList.remove('active');
+      poseLeft.classList.remove('active');
+      poseRight.classList.remove('active');
+      poseUp.classList.remove('active');
+      poseDown.classList.remove('active');
+    }
+
+    // Detect depression and anxiety based on multiple factors
+    function detectMentalHealth(expressions, mood, landmarks) {
+      const now = Date.now();
+      
+      // Depression detection factors
+      let depressionFactors = 0;
+      
+      // Prolonged sadness
+      if (mood === 'sad') {
+        if (lastMoodChangeTime > 0 && (now - lastMoodChangeTime) > 10000) {
+          depressionFactors += 30;
+        }
+        depressionFactors += 20;
+      }
+      
+      // Lack of positive emotions
+      if (expressions.happy < 0.1) {
+        depressionFactors += 15;
+      }
+      
+      // Neutral expression for long time
+      if (mood === 'neutral' && expressions.neutral > 0.8) {
+        depressionFactors += 10;
+      }
+      
+      // Downward head pose
+      const pose = detectHeadPose(landmarks);
+      if (pose.vertical === 'down') {
+        depressionFactors += 10;
+      }
+      
+      // Anxiety detection factors
+      let anxietyFactors = 0;
+      
+      // Fearful expression
+      if (mood === 'fearful') {
+        anxietyFactors += 25;
+      }
+      
+      // Surprised expression (could indicate startle response)
+      if (mood === 'surprised') {
+        anxietyFactors += 15;
+      }
+      
+      // Rapid blinking
+      if (lastBlinkTime > 0 && (now - lastBlinkTime) < 1000 && blinkCount > 3) {
+        anxietyFactors += 20;
+      }
+      
+      // Head movements (looking around)
+      if (pose.horizontal !== 'front') {
+        anxietyFactors += 10;
+      }
+      
+      // Update depression and anxiety levels with smoothing
+      depressionLevel = depressionLevel * 0.7 + depressionFactors * 0.3;
+      anxietyLevel = anxietyLevel * 0.7 + anxietyFactors * 0.3;
+      
+      // Update UI
+      depressionScore.textContent = Math.round(depressionLevel) + '%';
+      depressionBar.style.width = depressionLevel + '%';
+      
+      anxietyScore.textContent = Math.round(anxietyLevel) + '%';
+      anxietyBar.style.width = anxietyLevel + '%';
+      
+      return {
+        depression: depressionLevel,
+        anxiety: anxietyLevel
+      };
+    }
+
+    function resetMentalHealthIndicators() {
+      depressionLevel = 0;
+      anxietyLevel = 0;
+      depressionScore.textContent = '0%';
+      depressionBar.style.width = '0%';
+      anxietyScore.textContent = '0%';
+      anxietyBar.style.width = '0%';
+    }
+
+    // Show emotional guidance
+    function showGuidance(mood, mentalHealth) {
+      let guidanceType = mood;
+      
+      // Override with mental health conditions if detected
+      if (mentalHealth.depression > 70) {
+        guidanceType = 'depression';
+      } else if (mentalHealth.anxiety > 70) {
+        guidanceType = 'anxiety';
+      }
+      
+      const guidance = currentLanguage === 'hindi' ? emotionalGuidanceHindi[guidanceType] : emotionalGuidanceEnglish[guidanceType];
+      if (!guidance) return;
+      
+      guidanceIcon.textContent = guidance.icon;
+      guidanceContent.innerHTML = `
+        <div><strong>${guidance.title}</strong></div>
+        <div>${guidance.message}</div>
+        <div class="guidance-tip">
+          ${guidance.tips.map(tip => `<div>• ${tip}</div>`).join('')}
+        </div>
+      `;
+      
+      guidanceCard.style.display = 'block';
+      
+      return guidance.voiceMessage;
+    }
+    
+    function hideGuidance() {
+      guidanceCard.style.display = 'none';
+    }
+
+    // Speech emotion analysis
+    function startSpeechAnalysis() {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        speechResult.textContent = 'Speech recognition not supported in this browser';
+        return;
+      }
+      
+      if (isSpeechAnalysisActive) return;
+      
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = currentLanguage === 'hindi' ? 'hi-IN' : 'en-US';
+      
+      recognition.onstart = function() {
+        isSpeechAnalysisActive = true;
+        speechResult.textContent = currentLanguage === 'hindi' ? 'हिंदी भाषण सुन रहा हूं...' : 'Listening for speech...';
+        startSpeechBtn.disabled = true;
+        stopSpeechBtn.disabled = false;
+      };
+      
+      recognition.onresult = function(event) {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        // Simple emotion analysis based on keywords
+        const emotion = currentLanguage === 'hindi' ? 
+          analyzeHindiSpeechEmotion(finalTranscript || interimTranscript) :
+          analyzeEnglishSpeechEmotion(finalTranscript || interimTranscript);
+          
+        speechResult.textContent = currentLanguage === 'hindi' ? 
+          `पहचान: "${finalTranscript || interimTranscript}" - भावना: ${emotion}` :
+          `Detected: "${finalTranscript || interimTranscript}" - Emotion: ${emotion}`;
+        
+        // Combine with facial expression for more accurate emotion detection
+        if (finalTranscript && history.length > 0) {
+          const currentMood = history[0].mood;
+          const combinedEmotion = currentLanguage === 'hindi' ? 
+            combineHindiEmotions(currentMood, emotion) :
+            combineEnglishEmotions(currentMood, emotion);
+          speechResult.textContent += currentLanguage === 'hindi' ? 
+            ` | संयुक्त: ${combinedEmotion}` :
+            ` | Combined: ${combinedEmotion}`;
+          
+          // Update mental health based on speech
+          if (emotion === 'sad' || emotion === 'depression') {
+            depressionLevel = Math.min(depressionLevel + 10, 100);
+          } else if (emotion === 'anxiety' || emotion === 'fearful') {
+            anxietyLevel = Math.min(anxietyLevel + 10, 100);
+          }
+        }
+      };
+      
+      recognition.onerror = function(event) {
+        console.error('Speech recognition error', event.error);
+        speechResult.textContent = currentLanguage === 'hindi' ? 
+          `त्रुटि: ${event.error}` : `Error: ${event.error}`;
+        stopSpeechAnalysis();
+      };
+      
+      recognition.onend = function() {
+        if (isSpeechAnalysisActive) {
+          // Restart recognition if it ended unexpectedly
+          recognition.start();
+        }
+      };
+      
+      recognition.start();
+    }
+    
+    function stopSpeechAnalysis() {
+      if (recognition) {
+        recognition.stop();
+      }
+      isSpeechAnalysisActive = false;
+      speechResult.textContent = currentLanguage === 'hindi' ? 
+        'भाषण विश्लेषण रोका गया' : 'Speech analysis stopped';
+      startSpeechBtn.disabled = false;
+      stopSpeechBtn.disabled = true;
+    }
+    
+    // Simple Hindi speech emotion analysis based on keywords
+    function analyzeHindiSpeechEmotion(text) {
+      const lowerText = text.toLowerCase();
+      
+      if (/(उदास|दुखी|निराश|दुख|दर्द|अकेला)/.test(lowerText)) {
+        return 'sad';
+      } else if (/(खुश|आनंद|मजा|अच्छा|बढ़िया|शानदार)/.test(lowerText)) {
+        return 'happy';
+      } else if (/(गुस्सा|क्रोध|नाराज|चिढ़)/.test(lowerText)) {
+        return 'angry';
+      } else if (/(डर|भय|चिंता|घबराहट|परेशान)/.test(lowerText)) {
+        return 'fearful';
+      } else if (/(घृणा|नफरत|अप्रिय)/.test(lowerText)) {
+        return 'disgusted';
+      } else if (/(आश्चर्य|हैरान|अचंभित)/.test(lowerText)) {
+        return 'surprised';
+      } else if (/(थकान|निराशा|हताश|उम्मीद|नहीं)/.test(lowerText)) {
+        return 'depression';
+      } else if (/(चिंता|तनाव|घबराहट|डर|अशांति)/.test(lowerText)) {
+        return 'anxiety';
+      }
+      
+      return 'neutral';
+    }
+    
+    // Simple English speech emotion analysis based on keywords
+    function analyzeEnglishSpeechEmotion(text) {
+      const lowerText = text.toLowerCase();
+      
+      if (/(sad|unhappy|depressed|miserable|down|upset)/.test(lowerText)) {
+        return 'sad';
+      } else if (/(happy|joy|excited|great|awesome|good)/.test(lowerText)) {
+        return 'happy';
+      } else if (/(angry|mad|furious|annoyed|pissed)/.test(lowerText)) {
+        return 'angry';
+      } else if (/(scared|afraid|fear|nervous|anxious|worried)/.test(lowerText)) {
+        return 'fearful';
+      } else if (/(disgust|gross|nasty|yuck)/.test(lowerText)) {
+        return 'disgusted';
+      } else if (/(surprise|wow|oh my|unexpected)/.test(lowerText)) {
+        return 'surprised';
+      } else if (/(tired|hopeless|despair|can't|won't)/.test(lowerText)) {
+        return 'depression';
+      } else if (/(anxiety|stress|panic|worry|nervous)/.test(lowerText)) {
+        return 'anxiety';
+      }
+      
+      return 'neutral';
+    }
+    
+    // Combine facial and speech emotions in Hindi
+    function combineHindiEmotions(faceEmotion, speechEmotion) {
+      // If both match, confidence is high
+      if (faceEmotion === speechEmotion) {
+        return `${faceEmotion} (आवाज से पुष्टि)`;
+      }
+      
+      // If they conflict, note the discrepancy
+      return `${faceEmotion} (चेहरा) / ${speechEmotion} (आवाज) - मिश्रित भावना`;
+    }
+    
+    // Combine facial and speech emotions in English
+    function combineEnglishEmotions(faceEmotion, speechEmotion) {
+      // If both match, confidence is high
+      if (faceEmotion === speechEmotion) {
+        return `${faceEmotion} (confirmed by voice)`;
+      }
+      
+      // If they conflict, note the discrepancy
+      return `${faceEmotion} (face) / ${speechEmotion} (voice) - conflicted emotion`;
+    }
+
+    // Recording functions
+    function startRecording() {
+      if (isRecording) return;
+      
+      isRecording = true;
+      recordingData = [];
+      recordingStartTime = new Date();
+      recordingStatus.textContent = 'Recording... 10s';
+      recordBtn.textContent = 'Stop Recording';
+      recordBtn.classList.remove('success');
+      recordBtn.classList.add('danger');
+      
+      // Auto stop after 10 seconds
+      recordingTimeout = setTimeout(stopRecording, 10000);
+    }
+
+    function stopRecording() {
+      if (!isRecording) return;
+      
+      isRecording = false;
+      clearTimeout(recordingTimeout);
+      recordingStatus.textContent = 'Analysis complete';
+      recordBtn.textContent = 'Start Recording (10s)';
+      recordBtn.classList.remove('danger');
+      recordBtn.classList.add('success');
+      
+      // Analyze recording data
+      analyzeRecording();
+    }
+
+    function analyzeRecording() {
+      if (recordingData.length === 0) {
+        recordingResults.innerHTML = '<div class="muted">No data recorded</div>';
+        return;
+      }
+      
+      // Calculate average expressions
+      const avgExpressions = {};
+      const expressionKeys = Object.keys(recordingData[0].expressions);
+      
+      expressionKeys.forEach(key => {
+        avgExpressions[key] = recordingData.reduce((sum, data) => sum + data.expressions[key], 0) / recordingData.length;
+      });
+      
+      // Find dominant emotion
+      const sorted = Object.entries(avgExpressions).sort((a,b)=>b[1]-a[1]);
+      const top = sorted[0];
+      const mood = mapExpressionToMood(top[0]);
+      const conf = (top[1]*100).toFixed(1) + '%';
+      
+      // Display results
+      recordingResults.innerHTML = `
+        <div style="margin-bottom: 8px;">
+          <strong>Average Mood:</strong> ${mood.emoji} ${mood.label} (${conf})
+        </div>
+        <div class="muted">
+          Analyzed ${recordingData.length} frames over 10 seconds
+        </div>
+      `;
+    }
+
+    async function detectExpressions(){
+      if (!video || video.readyState < 2) return;
+      
+      // Ensure canvas size matches
+      if (overlay.width !== video.videoWidth || overlay.height !== video.videoHeight) setupCanvas();
+
+      // SSD model with higher accuracy
+      const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+      
+      // Detect all faces with landmarks and expressions
+      const results = await faceapi
+        .detectAllFaces(video, options)
+        .withFaceLandmarks()
+        .withFaceExpressions();
+
+      ctx.clearRect(0,0,overlay.width,overlay.height);
+      
+      // Update face count
+      faceCount.textContent = `Faces: ${results.length}`;
+      
+      if (results.length === 0){
+        // No faces detected
+        dominantMood.textContent = 'No face detected';
+        dominantConf.textContent = '—';
+        moodPill.textContent = '—';
+        resetPoseIndicators();
+        hideGuidance();
+        return;
+      }
+
+      // For simplicity, we'll focus on the first face for mood display
+      const result = results[0];
+      const expressions = result.expressions;
+      const landmarks = result.landmarks;
+      
+      // Apply smoothing
+      const smoothed = getSmoothedExpression(expressions);
+      const sorted = Object.entries(smoothed).sort((a,b)=>b[1]-a[1]);
+      
+      // Top expression
+      const top = sorted[0];
+      const mood = mapExpressionToMood(top[0]);
+      const conf = (top[1]*100).toFixed(1) + '%';
+
+      // Update UI
+      dominantMood.textContent = mood.label + (mood.note ? ' ('+mood.note+')' : '');
+      dominantConf.textContent = conf;
+      moodPill.textContent = mood.emoji + ' ' + mood.short;
+
+      // Detect mental health conditions
+      const mentalHealth = detectMentalHealth(smoothed, mood.short.toLowerCase(), landmarks);
+      
+      // Show emotional guidance
+      const voiceMessage = showGuidance(mood.short.toLowerCase(), mentalHealth);
+
+      // Update expressions list with progress bars
+      exprList.innerHTML = '';
+      for (const [k,v] of sorted){
+        const div = document.createElement('div'); 
+        div.className='expr';
+        const percentage = (v*100).toFixed(1);
+        div.innerHTML = `
+          <div>${capitalize(k)}</div>
+          <div>${percentage}%</div>
+        `;
+        
+        // Add progress bar
+        const progressContainer = document.createElement('div');
+        progressContainer.className = 'progress-container';
+        const progressBar = document.createElement('div');
+        progressBar.className = 'progress-bar';
+        progressBar.style.width = `${percentage}%`;
+        progressBar.style.background = expressionColors[k] || '#60a5fa';
+        progressContainer.appendChild(progressBar);
+        div.appendChild(progressContainer);
+        
+        exprList.appendChild(div);
+      }
+
+      // Draw all detected faces
+      results.forEach((result, index) => {
+        const resizedBox = result.detection.box;
+        const landmarks = result.landmarks;
+        
+        // Draw face box with different colors
+        ctx.strokeStyle = index === 0 ? '#60a5fa' : '#94a3b8';
+        ctx.lineWidth = 2; 
+        ctx.strokeRect(resizedBox.x, resizedBox.y, resizedBox.width, resizedBox.height);
+        
+        // Draw landmarks for the primary face only
+        if (index === 0) {
+          faceapi.draw.drawFaceLandmarks(overlay, landmarks);
+          
+          // Detect head pose
+          const pose = detectHeadPose(landmarks);
+          updatePoseIndicators(pose);
+          
+          // Detect blinking
+          detectBlink(landmarks);
+        }
+        
+        // Label each face with its index
+        ctx.fillStyle = index === 0 ? '#60a5fa' : '#94a3b8';
+        ctx.font = '14px Inter';
+        ctx.fillText(`Face ${index+1}`, resizedBox.x, resizedBox.y - 5);
+      });
+
+      // Add to history
+      const predictionTime = new Date();
+      
+      // Track mood changes for depression detection
+      if (history.length > 0 && history[0].mood !== mood.short) {
+        lastMoodChangeTime = predictionTime;
+      }
+      
+      history.unshift({t: predictionTime, mood: mood.short, conf: conf});
+      if (history.length>20) history.pop();
+      renderHistory();
+
+      // Store data if recording
+      if (isRecording) {
+        recordingData.push({
+          time: predictionTime,
+          mood: mood.short,
+          expressions: expressions,
+          confidence: conf
+        });
+        
+        // Update recording status with countdown
+        const elapsed = Math.floor((new Date() - recordingStartTime) / 1000);
+        recordingStatus.textContent = `Recording... ${10 - elapsed}s`;
+      }
+
+      // Send all prediction data to main website
+      const predictionData = {
+        mood: mood.short,
+        moodLabel: mood.label,
+        moodEmoji: mood.emoji,
+        moodNote: mood.note,
+        confidence: conf,
+        expressions: expressions,
+        sortedExpressions: sorted,
+        time: predictionTime.toISOString(),
+        faceCount: results.length,
+        mentalHealth: mentalHealth
+      };
+      
+      if (window.opener) {
+        window.opener.postMessage(
+          { type: 'modelPrediction', data: predictionData },
+          'https://calmnestyoursolution.netlify.app'
+        );
+      }
+      
+      // Voice feedback (only for significant changes or mental health alerts)
+      if (isVoiceEnabled && voiceMessage && 
+          (history.length > 1 && history[0].mood !== history[1].mood) ||
+          mentalHealth.depression > 70 || mentalHealth.anxiety > 70) {
+        speakMessage(voiceMessage);
+      }
+    }
+
+    function renderHistory(){
+      historyBody.innerHTML='';
+      for (const row of history){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${row.t.toLocaleTimeString()}</td><td>${row.mood}</td><td>${row.conf}</td>`;
+        historyBody.appendChild(tr);
+      }
+    }
+
+    function capitalize(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+
+    // Map face-api expressions to friendly mood labels
+    function mapExpressionToMood(expr){
+      switch(expr){
+        case 'happy': return {short:'Happy', label:'Happy', emoji:'😊', note:''};
+        case 'sad': return {short:'Sad', label:'Sad', emoji:'🙁', note:'may be down'};
+        case 'angry': return {short:'Angry', label:'Angry', emoji:'😠', note:'possible frustration'};
+        case 'fearful': return {short:'Afraid', label:'Fearful', emoji:'😨', note:'possible fear'};
+        case 'disgusted': return {short:'Disgusted', label:'Disgusted', emoji:'🤢', note:''};
+        case 'surprised': return {short:'Surprised', label:'Surprised', emoji:'😮', note:''};
+        default: return {short:'Neutral', label:'Neutral', emoji:'😐', note:''};
+      }
+    }
+
+    // Language toggle functionality
+    function setLanguage(lang) {
+      currentLanguage = lang;
+      
+      // Update button states
+      if (lang === 'hindi') {
+        hindiBtn.classList.add('active');
+        englishBtn.classList.remove('active');
+      } else {
+        englishBtn.classList.add('active');
+        hindiBtn.classList.remove('active');
+      }
+      
+      // Update speech recognition if active
+      if (isSpeechAnalysisActive) {
+        stopSpeechAnalysis();
+        startSpeechAnalysis();
+      }
+    }
+
+    // Theme toggle
+    themeToggle.addEventListener('click', () => {
+      isLightTheme = !isLightTheme;
+      if (isLightTheme) {
+        document.body.classList.add('light-theme');
+        themeToggle.textContent = '☀️';
+      } else {
+        document.body.classList.remove('light-theme');
+        themeToggle.textContent = '🌙';
+      }
+    });
+
+    // Test Voice button
+    testVoiceBtn.addEventListener('click', testVoice);
+
+    // Snapshot button
+    snapshotBtn.addEventListener('click', ()=>{
+      if (!video) return;
+      const tmp = document.createElement('canvas'); 
+      tmp.width = overlay.width; 
+      tmp.height = overlay.height; 
+      const tctx = tmp.getContext('2d');
+      tctx.drawImage(video,0,0,tmp.width,tmp.height);
+      tctx.drawImage(overlay,0,0);
+      const url = tmp.toDataURL('image/png');
+      const a = document.createElement('a'); 
+      a.href = url; 
+      a.download = 'mood-groove-snapshot.png'; 
+      a.click();
+    });
+
+    // Voice toggle
+    voiceToggle.addEventListener('click', () => {
+      isVoiceEnabled = !isVoiceEnabled;
+      voiceToggle.textContent = `Voice Feedback: ${isVoiceEnabled ? 'On' : 'Off'}`;
+      voiceToggle.classList.toggle('warning', isVoiceEnabled);
+      voiceToggle.classList.toggle('secondary', !isVoiceEnabled);
+      
+      if (isVoiceEnabled) {
+        showNotification('Voice feedback enabled', 'success');
+        // Test voice when enabled
+        setTimeout(testVoice, 500);
+      }
+    });
+
+    // Language buttons
+    hindiBtn.addEventListener('click', () => {
+      setLanguage('hindi');
+    });
+    
+    englishBtn.addEventListener('click', () => {
+      setLanguage('english');
+    });
+
+    // Recording button
+    recordBtn.addEventListener('click', () => {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    });
+
+    // Speech analysis buttons
+    startSpeechBtn.addEventListener('click', () => {
+      startSpeechAnalysis();
+    });
+    
+    stopSpeechBtn.addEventListener('click', () => {
+      stopSpeechAnalysis();
+    });
+
+    // Retry button for permission issues
+    retryBtn.addEventListener('click', async () => {
+      try {
+        await startCamera();
+      } catch (error) {
+        console.error('Retry failed:', error);
+      }
+    });
+
+    // Start button
+    startBtn.addEventListener('click', async ()=>{
+      startBtn.disabled = true; 
+      startBtn.textContent = 'Starting...';
+      try {
+        await loadModels();
+        await startCamera();
+      } catch (error) { 
+        console.error('Start failed:', error); 
+        handleCameraError(error);
+      } finally {
+        startBtn.disabled = false; 
+        startBtn.textContent = 'Start Camera';
+      }
+    });
+    
+    // Stop button
+    stopBtn.addEventListener('click', ()=>{ stopCamera(); });
+
+    // Initialize language
+    setLanguage('hindi');
+
+    // Auto attempt to load models when page loads
+    (async ()=>{
+      try{ 
+        await loadModels(); 
+      }catch(e){ 
+        // ignore - will show error in UI 
+      }
+    })();
+  </script>
+</body>
+</html>

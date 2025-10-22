@@ -1,0 +1,40 @@
+[
+  {
+    "id": "1",
+    "name": "Dr. Anya Sharma",
+    "specialty": "Cognitive Behavioral Therapy (CBT)",
+    "description": "Dr. Sharma specializes in helping students manage anxiety, stress, and depression through evidence-based CBT techniques. She has over 10 years of experience in the field.",
+    "imageUrl": "https://images.unsplash.com/photo-1557862921-37829c790f19?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "imageHint": "man in a blue shirt",
+    "availability": [
+      { "day": "Monday", "slots": ["09:00 AM", "11:00 AM", "02:00 PM"] },
+      { "day": "Wednesday", "slots": ["10:00 AM", "01:00 PM", "04:00 PM"] },
+      { "day": "Friday", "slots": ["09:00 AM", "11:00 AM"] }
+    ]
+  },
+  {
+    "id": "2",
+    "name": "Dr. Rohan Verma",
+    "specialty": "Mindfulness & Stress Reduction",
+    "description": "Dr. Verma focuses on mindfulness-based approaches to help individuals cope with stress, improve focus, and enhance overall well-being. He is also a certified yoga instructor.",
+    "imageUrl": "https://images.unsplash.com/photo-1566753323558-f4e0952af115?q=80&w=1921&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "imageHint": "man in a white shirt",
+    "availability": [
+      { "day": "Tuesday", "slots": ["08:00 AM", "10:00 AM", "01:00 PM"] },
+      { "day": "Thursday", "slots": ["11:00 AM", "02:00 PM", "05:00 PM"] }
+    ]
+  },
+  {
+    "id": "3",
+    "name": "Dr. Priya Singh",
+    "specialty": "Relationship Counseling",
+    "description": "Dr. Singh helps couples and individuals navigate relationship challenges, improve communication, and build stronger connections. She has a compassionate and non-judgmental approach.",
+    "imageUrl": "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1961&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "imageHint": "woman in a black shirt",
+    "availability": [
+      { "day": "Monday", "slots": ["10:00 AM", "12:00 PM", "03:00 PM"] },
+      { "day": "Wednesday", "slots": ["09:00 AM", "11:00 AM"] },
+      { "day": "Friday", "slots": ["01:00 PM", "03:00 PM", "05:00 PM"] }
+    ]
+  }
+]
