@@ -1,21 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-// Removed toast import because '@/components/ui/use-toast' does not exist
 
 export default function ProfileSetupPage() {
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState<number | ''>('');
+  const [gender, setGender] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  // Using inline messages instead of toast
 
   const handleProfileSetup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,26 +24,23 @@ export default function ProfileSetupPage() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
-      const { error } = await supabase.from('profiles').update({
+      const { error } = await supabase.from('profiles').upsert({
+        id: user.id,
         full_name: fullName,
         age: age,
+        gender: gender,
         updated_at: new Date().toISOString(),
-      }).eq('id', user.id);
+      });
 
       if (error) {
         setMessage(`Error updating profile: ${error.message}`);
       } else {
         setMessage('Profile setup complete! Redirecting...');
-        router.push('/dashboard'); // Redirect to dashboard after setup
+        router.push('/dashboard');
       }
     } else {
-        setMessage('You must be logged in to set up a profile.');
-        // toast({
-        //     title: "Authentication Error",
-        //     description: "User not found. Please log in again.",
-        //     variant: "destructive",
-        // });
-        router.push('/login');
+      setMessage('You must be logged in to set up a profile.');
+      router.push('/login');
     }
     setLoading(false);
   };
@@ -82,11 +78,28 @@ export default function ProfileSetupPage() {
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gender</Label>
+              <select
+                id="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="w-full p-2 bg-gray-700 border-gray-600 text-white rounded-md"
+                required
+              >
+                <option value="" disabled>Select your gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="transgender">Transgender</option>
+                <option value="other">Other</option>
+                <option value="prefer-not-to-say">Prefer not to say</option>
+              </select>
+            </div>
             {message && <p className="text-center text-sm text-gray-300">{message}</p>}
             <div className="flex flex-col space-y-4">
-                <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700" disabled={loading}>
-                    {loading ? 'Saving...' : 'Save and Continue'}
-                </Button>
+              <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700" disabled={loading}>
+                {loading ? 'Saving...' : 'Save and Continue'}
+              </Button>
             </div>
           </form>
         </CardContent>

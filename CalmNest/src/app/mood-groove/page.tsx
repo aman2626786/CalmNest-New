@@ -1,7 +1,6 @@
-"use client";
-
 import { useState, useRef, useEffect } from 'react';
 import Script from 'next/script';
+import { useSession } from '@supabase/auth-helpers-react';
 import './styles.css';
 
 declare const faceapi: any;
@@ -89,6 +88,7 @@ const MoodGroovePage = () => {
   const [confidence, setConfidence] = useState<number>(0);
   const [sessionData, setSessionData] = useState<any[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const session = useSession();
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -211,69 +211,56 @@ const MoodGroovePage = () => {
   };
 
   const saveSessionData = async () => {
-    // Get user email from localStorage or prompt user
-    let userEmail = localStorage.getItem('userEmail');
-    if (!userEmail) {
-      userEmail = prompt('Please enter your email for analysis tracking:');
-      if (userEmail) {
-        localStorage.setItem('userEmail', userEmail);
-      } else {
-        console.log('No email provided, skipping save');
-        return;
-      }
+    if (!session?.user?.id) {
+      alert('You must be logged in to save your session.');
+      return;
     }
-    
+
     if (sessionData.length === 0) {
       console.log("No session data to save");
       return;
     }
-    
+
     try {
-      // Calculate session statistics
       const totalDetections = sessionData.length;
       const moodCounts = sessionData.reduce((acc, entry) => {
         acc[entry.dominantMood] = (acc[entry.dominantMood] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
-      
+
       const avgDepression = sessionData.reduce((sum, entry) => sum + entry.depression, 0) / totalDetections;
       const avgAnxiety = sessionData.reduce((sum, entry) => sum + entry.anxiety, 0) / totalDetections;
       const avgConfidence = sessionData.reduce((sum, entry) => sum + entry.confidence, 0) / totalDetections;
-      
+
       const dominantMood = Object.entries(moodCounts).reduce((a, b) => moodCounts[a[0]] > moodCounts[b[0]] ? a : b)[0];
-      
-      // Prepare session data to send to backend
-      const sessionAnalysis = {
-        userEmail: userEmail,
-        sessionStartTime: sessionStartTime,
-        sessionEndTime: new Date(),
-        totalDetections: totalDetections,
+
+      const moodGrooveResult = {
+        userId: session.user.id,
+        userEmail: session.user.email,
         dominantMood: dominantMood,
-        avgConfidence: avgConfidence,
-        avgDepression: avgDepression,
-        avgAnxiety: avgAnxiety,
-        moodDistribution: moodCounts,
-        rawData: sessionData
+        confidence: avgConfidence,
+        depression: avgDepression,
+        anxiety: avgAnxiety,
+        expressions: expressions,
       };
 
-      console.log("Sending session analysis:", sessionAnalysis);
-
-      const response = await fetch('http://localhost:5001/api/facial-analysis', {
+      const response = await fetch('http://127.0.0.1:5001/api/mood-groove', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sessionAnalysis),
+        body: JSON.stringify(moodGrooveResult),
       });
 
       if (response.ok) {
-        console.log("Session analysis saved successfully");
+        console.log("Mood groove session saved successfully");
         alert(`Analysis completed! Detected ${totalDetections} expressions. Dominant mood: ${dominantMood}`);
       } else {
-        console.error("Failed to save session analysis:", await response.text());
+        console.error("Failed to save mood groove session:", await response.text());
       }
     } catch (error) {
-      console.error("Error saving session data:", error);
+      console.error("Error saving mood groove data:", error);
     }
   };
+
 
   return (
     <>
@@ -366,5 +353,3 @@ const MoodGroovePage = () => {
     </>
   );
 };
-
-export default MoodGroovePage;
