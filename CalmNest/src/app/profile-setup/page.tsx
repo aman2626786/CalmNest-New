@@ -21,28 +21,43 @@ export default function ProfileSetupPage() {
     setLoading(true);
     setMessage('');
 
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
 
-    if (user) {
+      if (!user) {
+        setMessage('You must be logged in to set up a profile.');
+        router.push('/login');
+        return;
+      }
+
+      // Store user email in localStorage for consistent access
+      localStorage.setItem('userEmail', user.email || '');
+      localStorage.setItem('userId', user.id);
+
       const { error } = await supabase.from('profiles').upsert({
         id: user.id,
+        email: user.email,
         full_name: fullName,
-        age: age,
+        age: Number(age),
         gender: gender,
         updated_at: new Date().toISOString(),
       });
 
       if (error) {
+        console.error('Profile setup error:', error);
         setMessage(`Error updating profile: ${error.message}`);
       } else {
         setMessage('Profile setup complete! Redirecting...');
-        router.push('/dashboard');
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1000);
       }
-    } else {
-      setMessage('You must be logged in to set up a profile.');
-      router.push('/login');
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      setMessage('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

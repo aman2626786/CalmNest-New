@@ -59,27 +59,34 @@ const DashboardPage = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   useEffect(() => {
-    if (session?.user?.id) {
+    if (session?.user?.id && session?.user?.email) {
       const fetchData = async () => {
         try {
-          // Fetch regular dashboard data
-          const dashboardResponse = await fetch(`http://127.0.0.1:5001/dashboard/${session.user.id}`);
-          if (dashboardResponse.ok) {
-            const data = await dashboardResponse.json();
-            setDashboardData(data);
-          } else {
-            console.error('Failed to fetch dashboard data. Status:', dashboardResponse.status);
-          }
+          // Store user info in localStorage for consistent access
+          localStorage.setItem('userEmail', session.user.email || '');
+          localStorage.setItem('userId', session.user.id);
 
-          // Fetch facial analysis data
-          const userEmail = localStorage.getItem('userEmail');
-          if (userEmail) {
-            const facialResponse = await fetch(`http://127.0.0.1:5001/facial-analysis/${userEmail}`);
-            if (facialResponse.ok) {
-              const facialData = await facialResponse.json();
-              setFacialAnalysisData(facialData);
-            } else {
-              console.error('Failed to fetch facial analysis data. Status:', facialResponse.status);
+          // Use unified dashboard endpoint for consistent data fetching
+          const unifiedResponse = await fetch(`http://127.0.0.1:5001/api/dashboard/unified/${session.user.id}/${session.user.email}`);
+          if (unifiedResponse.ok) {
+            const unifiedData = await unifiedResponse.json();
+            setDashboardData({
+              test_submissions: unifiedData.test_submissions,
+              mood_groove_results: unifiedData.mood_groove_results,
+              breathing_exercises: unifiedData.breathing_exercises,
+              test_count: unifiedData.test_count
+            });
+            setFacialAnalysisData({
+              facial_analysis_sessions: unifiedData.facial_analysis_sessions,
+              total_sessions: unifiedData.total_sessions
+            });
+          } else {
+            console.error('Failed to fetch unified dashboard data. Status:', unifiedResponse.status);
+            // Fallback to individual endpoints
+            const dashboardResponse = await fetch(`http://127.0.0.1:5001/dashboard/${session.user.id}`);
+            if (dashboardResponse.ok) {
+              const data = await dashboardResponse.json();
+              setDashboardData(data);
             }
           }
         } catch (error) {

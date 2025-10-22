@@ -73,8 +73,11 @@ export default function ProfilePage() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { id, value } = e.target;
-    setProfile(prev => prev ? { ...prev, [id]: value } : null);
+    const { name, value } = e.target;
+    setProfile(prev => prev ? { 
+      ...prev, 
+      [name]: name === 'age' ? (value === '' ? '' : Number(value)) : value 
+    } : null);
   };
 
   if (loading || !session) {
@@ -106,26 +109,31 @@ export default function ProfilePage() {
                 <Label htmlFor="full_name">Full Name</Label>
                 <Input
                   id="full_name"
+                  name="full_name"
                   type="text"
                   value={profile?.full_name || ''}
                   onChange={handleInputChange}
                   className="bg-gray-700 border-gray-600 text-white"
+                  placeholder="Enter your full name"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="age">Age</Label>
                 <Input
                   id="age"
+                  name="age"
                   type="number"
                   value={profile?.age || ''}
                   onChange={handleInputChange}
                   className="bg-gray-700 border-gray-600 text-white"
+                  placeholder="Enter your age"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gender">Gender</Label>
                 <select
                   id="gender"
+                  name="gender"
                   value={profile?.gender || ''}
                   onChange={handleInputChange}
                   className="w-full p-2 bg-gray-700 border-gray-600 text-white rounded-md"

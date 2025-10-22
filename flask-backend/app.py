@@ -232,6 +232,76 @@ def get_mood_groove_by_email(user_email):
         'timestamp': res.timestamp.isoformat()
     } for res in mood_groove_results])
 
+@app.route('/api/dashboard/unified/<user_id>/<user_email>')
+def unified_dashboard(user_id, user_email):
+    """Unified dashboard endpoint that fetches all user data by both ID and email"""
+    try:
+        # Fetch test submissions by user_id
+        test_submissions = TestSubmission.query.filter_by(user_id=user_id).all()
+        
+        # Fetch mood groove results by both user_id and user_email
+        mood_groove_results_by_id = MoodGrooveResult.query.filter_by(user_id=user_id).all()
+        mood_groove_results_by_email = MoodGrooveResult.query.filter_by(user_email=user_email).all()
+        
+        # Combine and deduplicate mood groove results
+        all_mood_results = {}
+        for result in mood_groove_results_by_id + mood_groove_results_by_email:
+            all_mood_results[result.id] = result
+        
+        # Fetch breathing exercises by user_id
+        breathing_logs = BreathingExerciseLog.query.filter_by(user_id=user_id).all()
+        
+        # Fetch facial analysis by user_email
+        facial_sessions = FacialAnalysisSession.query.filter_by(user_email=user_email).all()
+
+        return jsonify({
+            'test_submissions': [{
+                'id': sub.id,
+                'user_id': sub.user_id,
+                'test_type': sub.test_type,
+                'score': sub.score,
+                'severity': sub.severity,
+                'answers': sub.answers,
+                'timestamp': sub.timestamp.isoformat()
+            } for sub in test_submissions],
+            'mood_groove_results': [{
+                'id': res.id,
+                'user_id': res.user_id,
+                'user_email': res.user_email,
+                'dominant_mood': res.dominant_mood,
+                'confidence': res.confidence,
+                'depression': res.depression,
+                'anxiety': res.anxiety,
+                'expressions': res.expressions,
+                'timestamp': res.timestamp.isoformat()
+            } for res in all_mood_results.values()],
+            'breathing_exercises': [{
+                'id': log.id,
+                'user_id': log.user_id,
+                'exercise_name': log.exercise_name,
+                'duration_seconds': log.duration_seconds,
+                'timestamp': log.timestamp.isoformat()
+            } for log in breathing_logs],
+            'facial_analysis_sessions': [{
+                'id': session.id,
+                'user_email': session.user_email,
+                'session_start_time': session.session_start_time.isoformat(),
+                'session_end_time': session.session_end_time.isoformat(),
+                'total_detections': session.total_detections,
+                'dominant_mood': session.dominant_mood,
+                'avg_confidence': session.avg_confidence,
+                'avg_depression': session.avg_depression,
+                'avg_anxiety': session.avg_anxiety,
+                'mood_distribution': session.mood_distribution,
+                'raw_data': session.raw_data,
+                'timestamp': session.timestamp.isoformat()
+            } for session in facial_sessions],
+            'test_count': len(test_submissions),
+            'total_sessions': len(facial_sessions)
+        })
+    except Exception as e:
+        return jsonify({'error': f'Failed to fetch unified dashboard data: {str(e)}'}), 500
+
 # --- Dashboard ---
 
 @app.route('/api/dashboard/overall/<user_id>')
