@@ -29,10 +29,15 @@ type Counselor = typeof counselors[0];
 export default function CounselorDetailClientPage() {
   const params = useParams();
   const counselorId = params.id as string;
-  const counselor = counselors.find(c => c.id === counselorId) as Counselor;
+  const counselor = counselors.find(c => c.id === counselorId);
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [isBookingConfirmed, setIsBookingConfirmed] = useState(false);
+
+  // Early return if counselor not found
+  if (!counselor) {
+    return <div>Counselor not found.</div>;
+  }
 
   const form = useForm<z.infer<typeof bookingSchema>>({
     resolver: zodResolver(bookingSchema),
@@ -40,11 +45,15 @@ export default function CounselorDetailClientPage() {
 
   const availableDays = useMemo(() => {
     const dayMap: { [key: string]: boolean } = {};
-    counselor.availability.forEach(a => {
-      dayMap[a.day.toLowerCase()] = true;
-    });
+    if (counselor?.availability) {
+      counselor.availability.forEach(a => {
+        if (a?.day) {
+          dayMap[a.day.toLowerCase()] = true;
+        }
+      });
+    }
     return dayMap;
-  }, [counselor.availability]);
+  }, [counselor?.availability]);
 
   const availableSlots = useMemo(() => {
     if (!selectedDate) return [];
@@ -68,10 +77,6 @@ export default function CounselorDetailClientPage() {
       // Handle error, maybe with a toast notification
       console.error(result.error);
     }
-  }
-
-  if (!counselor) {
-    return <div>Counselor not found.</div>;
   }
   
   if (isBookingConfirmed) {

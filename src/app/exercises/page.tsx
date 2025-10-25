@@ -186,9 +186,12 @@ export default function GuidedBreathingPage() {
                 <div>
                   <h4 className="font-semibold text-sm text-primary">{t('steps')}</h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground">
-                    {(t(`${exercise.id}.steps`, { returnObjects: true }) as string[]).map((step, i) => (
-                      <li key={i}>{step}</li>
-                    ))}
+                    {Array.isArray(t(`${exercise.id}.steps`, { returnObjects: true })) 
+                      ? (t(`${exercise.id}.steps`, { returnObjects: true }) as string[]).map((step, i) => (
+                          <li key={i}>{step}</li>
+                        ))
+                      : <li>Steps not available</li>
+                    }
                   </ul>
                 </div>
               </div>
