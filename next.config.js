@@ -3,10 +3,6 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   trailingSlash: true,
-  output: 'export',
-  distDir: 'out',
-  basePath: '',
-  assetPrefix: '',
   eslint: {
     ignoreDuringBuilds: true,
   },
