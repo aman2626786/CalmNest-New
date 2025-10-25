@@ -6,10 +6,14 @@ from database import db
 from models import TestSubmission, MoodGrooveResult, ChatLog, BreathingExerciseLog, ForumPost, Feedback, UserInteraction, FacialAnalysisSession, ComprehensiveAssessment, AssessmentSession, Profile
 
 app = Flask(__name__)
-CORS(app) # This will allow your Next.js app to make requests to your Flask app
+
+# CORS Configuration for production
+import os
+allowed_origins = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
+CORS(app, origins=allowed_origins)
 
 # Database Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:%2A13579%2ASharma@db.lrvmsulryjwgrqwniltm.supabase.co:5432/postgres'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://postgres:%2A13579%2ASharma@db.lrvmsulryjwgrqwniltm.supabase.co:5432/postgres')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True
@@ -1063,4 +1067,6 @@ def reset_db():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    port = int(os.getenv('PORT', 5001))
+    debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug, port=port, host='0.0.0.0')
