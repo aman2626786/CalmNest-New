@@ -5,6 +5,8 @@ const nextConfig = {
   trailingSlash: true,
   output: 'export',
   distDir: 'out',
+  basePath: '',
+  assetPrefix: '',
   webpack: (config) => {
     config.resolve.fallback = { fs: false, net: false, tls: false };
     return config;
@@ -19,6 +21,10 @@ const nextConfig = {
       },
     ],
     unoptimized: true,
+  },
+  // Disable server-side features for static export
+  experimental: {
+    esmExternals: false,
   },
 }
 

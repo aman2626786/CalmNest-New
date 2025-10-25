@@ -4,8 +4,26 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  NPM_VERSION = "9"
 
+# Handle SPA routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
+  status = 200
+
+# Specific redirects for main routes
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/login"
+  to = "/login/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/profile"
+  to = "/profile/index.html"
   status = 200
