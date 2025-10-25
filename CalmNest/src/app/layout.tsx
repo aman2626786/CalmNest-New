@@ -6,6 +6,7 @@ import './globals.css';
 import I18nProvider from '@/components/I18nProvider';
 import { MoodProvider } from '@/context/MoodContext';
 import { ResultsProvider } from '@/context/ResultsContext';
+import { UserProfileProvider } from '@/context/UserProfileContext';
 import { VoiceflowContextUpdater } from '@/components/VoiceflowContextUpdater';
 import { Header } from '@/components/layout/Header';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
@@ -36,15 +37,17 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SessionContextProvider supabaseClient={supabase}>
-            <I18nProvider>
-              <MoodProvider>
-                <ResultsProvider>
-                  <VoiceflowContextUpdater />
-                  <Header />
-                  <main className="pt-20">{children}</main>
-                </ResultsProvider>
-              </MoodProvider>
-            </I18nProvider>
+            <UserProfileProvider>
+              <I18nProvider>
+                <MoodProvider>
+                  <ResultsProvider>
+                    <VoiceflowContextUpdater />
+                    <Header />
+                    <main className="pt-20">{children}</main>
+                  </ResultsProvider>
+                </MoodProvider>
+              </I18nProvider>
+            </UserProfileProvider>
           </SessionContextProvider>
         </ThemeProvider>
 

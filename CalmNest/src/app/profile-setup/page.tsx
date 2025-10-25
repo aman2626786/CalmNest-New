@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useUserProfile } from '@/context/UserProfileContext';
+import { Loader2 } from 'lucide-react';
 
 export default function ProfileSetupPage() {
   const [fullName, setFullName] = useState('');
@@ -15,6 +17,7 @@ export default function ProfileSetupPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { updateProfile, refreshProfile } = useUserProfile();
 
   const handleProfileSetup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,28 +33,26 @@ export default function ProfileSetupPage() {
         return;
       }
 
-      // Store user email in localStorage for consistent access
+      // Store user info in localStorage for consistent access
       localStorage.setItem('userEmail', user.email || '');
       localStorage.setItem('userId', user.id);
+      localStorage.setItem('userName', fullName);
 
-      const { error } = await supabase.from('profiles').upsert({
-        id: user.id,
-        email: user.email,
+      // Update profile using context (which now uses Flask backend)
+      await updateProfile({
         full_name: fullName,
         age: Number(age),
-        gender: gender,
-        updated_at: new Date().toISOString(),
+        gender: gender
       });
 
-      if (error) {
-        console.error('Profile setup error:', error);
-        setMessage(`Error updating profile: ${error.message}`);
-      } else {
-        setMessage('Profile setup complete! Redirecting...');
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 1000);
-      }
+      setMessage('Profile setup complete! Redirecting...');
+      
+      // Refresh profile data
+      await refreshProfile();
+      
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1000);
     } catch (error) {
       console.error('Unexpected error:', error);
       setMessage('An unexpected error occurred. Please try again.');
@@ -61,7 +62,7 @@ export default function ProfileSetupPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900/10 to-gray-900 flex items-center justify-center">
       <Card className="w-full max-w-md bg-gray-800 border-gray-700 text-white">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">Complete Your Profile</CardTitle>

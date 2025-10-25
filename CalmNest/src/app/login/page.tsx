@@ -22,20 +22,29 @@ export default function LoginPage() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('full_name, age')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
-            console.error('Error fetching profile:', error);
-            return;
-        }
-
-        if (!profile || !profile.full_name || !profile.age) {
-          router.push('/profile-setup');
-        } else {
+        try {
+          // Try to fetch profile from Flask backend
+          const response = await fetch(`http://127.0.0.1:5001/api/profile/${session.user.id}`);
+          
+          if (response.ok) {
+            const profile = await response.json();
+            
+            if (!profile.full_name || !profile.age) {
+              router.push('/profile-setup');
+            } else {
+              router.push('/dashboard');
+            }
+          } else if (response.status === 404) {
+            // No profile found, redirect to setup
+            router.push('/profile-setup');
+          } else {
+            console.error('Error fetching profile:', response.status);
+            // Continue to dashboard even if profile fetch fails
+            router.push('/dashboard');
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          // Continue to dashboard even if profile fetch fails
           router.push('/dashboard');
         }
       } else if (event === 'SIGNED_OUT') {

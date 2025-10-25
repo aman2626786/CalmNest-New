@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e9; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <h1>Profile API Test</h1>
+    
+    <button onclick="testGetProfile()">Test Get Profile</button>
+    <button onclick="testUpdateProfile()">Test Update Profile</button>
+    <button onclick="testLocalStorage()">Check LocalStorage</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const userId = '1d786dd4-1304-4e56-b347-440ed9bec358';
+        const apiBase = 'http://127.0.0.1:5001/api';
+        
+        function addResult(message, isError = false) {
+            const div = document.createElement('div');
+            div.className = `result ${isError ? 'error' : 'success'}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        async function testGetProfile() {
+            try {
+                const response = await fetch(`${apiBase}/profile/${userId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`Profile fetched: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    addResult(`Failed to fetch profile: ${response.status}`, true);
+                }
+            } catch (error) {
+                addResult(`Error: ${error.message}`, true);
+            }
+        }
+        
+        async function testUpdateProfile() {
+            try {
+                const response = await fetch(`${apiBase}/profile/${userId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'devesh9667735720@gmail.com',
+                        full_name: 'Devesh Kumar Sharma (Updated)',
+                        age: 27,
+                        gender: 'male'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`Profile updated: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    addResult(`Failed to update profile: ${response.status}`, true);
+                }
+            } catch (error) {
+                addResult(`Error: ${error.message}`, true);
+            }
+        }
+        
+        function testLocalStorage() {
+            const profile = localStorage.getItem('userProfile');
+            const userName = localStorage.getItem('userName');
+            const userEmail = localStorage.getItem('userEmail');
+            
+            addResult(`LocalStorage - Profile: ${profile}`);
+            addResult(`LocalStorage - UserName: ${userName}`);
+            addResult(`LocalStorage - UserEmail: ${userEmail}`);
+        }
+    </script>
+</body>
+</html>

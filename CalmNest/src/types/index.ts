@@ -26,3 +26,12 @@ export interface BreathingExerciseLog {
     duration_seconds: number;
     timestamp: string;
 }
+
+export interface Feedback {
+    id: number;
+    user_id: string;
+    user_name?: string;
+    feedback_text: string;
+    rating?: number;
+    timestamp: string;
+}

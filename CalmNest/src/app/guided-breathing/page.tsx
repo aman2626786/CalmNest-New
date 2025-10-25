@@ -3,18 +3,24 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from '@supabase/auth-helpers-react';
-import { X, Zap, Wind, Brain, Eye, PersonStanding } from 'lucide-react';
+import { X, Zap, Wind, Brain, Eye, PersonStanding, Moon, Bed, Clock, Heart, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { FAQ } from '@/components/common/FAQ';
+import { HydrationSafeTranslation } from '@/components/common/HydrationSafeTranslation';
 
-const exercises = [
+const breathingExercises = [
   {
     id: 'box-breathing',
     title: 'Box Breathing',
-    icon: <Wind className="h-8 w-8 text-primary" />,
+    icon: <Wind className="h-8 w-8 text-blue-500" />,
     description: 'A simple technique to calm your nervous system and reduce stress.',
     science: 'Evens out breath pace, stimulating the vagus nerve to lower heart rate and blood pressure.',
     steps: ['Inhale for 4s', 'Hold for 4s', 'Exhale for 4s', 'Hold for 4s'],
+    duration: '5-10 minutes',
+    difficulty: 'Beginner',
     cycle: [
       { instruction: 'Inhale', duration: 4, animation: 'inhale' },
       { instruction: 'Hold', duration: 4, animation: 'hold' },
@@ -25,10 +31,12 @@ const exercises = [
   {
     id: '478-breathing',
     title: '4-7-8 Breathing',
-    icon: <Zap className="h-8 w-8 text-primary" />,
+    icon: <Zap className="h-8 w-8 text-purple-500" />,
     description: 'Known as the "relaxing breath," it helps with anxiety and sleep.',
     science: 'Acts as a natural tranquilizer for the nervous system by increasing oxygen in the bloodstream.',
     steps: ['Inhale for 4s', 'Hold for 7s', 'Exhale for 8s'],
+    duration: '3-5 minutes',
+    difficulty: 'Intermediate',
     cycle: [
       { instruction: 'Inhale', duration: 4, animation: 'inhale' },
       { instruction: 'Hold', duration: 7, animation: 'hold' },
@@ -38,10 +46,12 @@ const exercises = [
    {
     id: '54321-grounding',
     title: '5-4-3-2-1 Grounding',
-    icon: <Eye className="h-8 w-8 text-primary" />,
+    icon: <Eye className="h-8 w-8 text-green-500" />,
     description: 'Pulls you out of anxious thoughts by focusing on your senses.',
     science: 'Redirects focus from internal distress to the external environment, interrupting overwhelming thoughts.',
     steps: ['See 5 things', 'Feel 4 things', 'Hear 3 things', 'Smell 2 things', 'Taste 1 thing'],
+    duration: '5-7 minutes',
+    difficulty: 'Beginner',
      cycle: [
       { instruction: 'Acknowledge 5 things you can SEE', duration: 10, animation: 'observe' },
       { instruction: 'Acknowledge 4 things you can TOUCH', duration: 8, animation: 'observe' },
@@ -51,37 +61,134 @@ const exercises = [
     ],
   },
   {
-    id: 'pmr',
-    title: 'Progressive Muscle Relaxation',
-    icon: <PersonStanding className="h-8 w-8 text-primary" />,
-    description: 'Reduces anxiety and physical tension by tensing and relaxing muscle groups.',
-    science: 'Teaches the body the difference between tension and relaxation, promoting a state of deep calm.',
-    steps: ['Tense muscles for 5s', 'Release and relax for 10s', 'Repeat for different muscle groups'],
-    cycle: [
-        { instruction: 'Tense your feet', duration: 5, animation: 'squeeze'},
-        { instruction: 'Release your feet', duration: 10, animation: 'release'},
-        { instruction: 'Tense your legs', duration: 5, animation: 'squeeze'},
-        { instruction: 'Release your legs', duration: 10, animation: 'release'},
-        { instruction: 'Tense your torso', duration: 5, animation: 'squeeze'},
-        { instruction: 'Release your torso', duration: 10, animation: 'release'},
-        { instruction: 'Tense your arms', duration: 5, animation: 'squeeze'},
-        { instruction: 'Release your arms', duration: 10, animation: 'release'},
-        { instruction: 'Tense your face', duration: 5, animation: 'squeeze'},
-        { instruction: 'Release your face', duration: 10, animation: 'release'},
-    ],
-  },
-  {
     id: 'alternate-nostril',
     title: 'Alternate Nostril Breathing',
-    icon: <Brain className="h-8 w-8 text-primary" />,
+    icon: <Brain className="h-8 w-8 text-indigo-500" />,
     description: 'Balances the brain hemispheres, promoting clarity and calm.',
     science: 'Nadi Shodhana is said to harmonize the left and right brain hemispheres, calming the mind.',
     steps: ['Inhale left', 'Exhale right', 'Inhale right', 'Exhale left'],
+    duration: '5-10 minutes',
+    difficulty: 'Advanced',
     cycle: [
       { instruction: 'Close right nostril, INHALE left', duration: 4, animation: 'inhale' },
       { instruction: 'Close left, EXHALE right', duration: 6, animation: 'exhale' },
       { instruction: 'INHALE right', duration: 4, animation: 'inhale' },
       { instruction: 'Close right, EXHALE left', duration: 6, animation: 'exhale' },
+    ],
+  },
+];
+
+const sleepTechniques = [
+  {
+    id: 'progressive-muscle-relaxation',
+    title: 'Progressive Muscle Relaxation',
+    icon: <PersonStanding className="h-8 w-8 text-purple-500" />,
+    description: 'Systematically tense and relax muscle groups to release physical tension.',
+    science: 'Teaches the body the difference between tension and relaxation, promoting deep sleep.',
+    steps: ['Tense muscles for 5s', 'Release and relax for 10s', 'Move through all muscle groups'],
+    duration: '15-20 minutes',
+    difficulty: 'Beginner',
+    cycle: [
+        { instruction: 'Tense your feet and toes', duration: 5, animation: 'squeeze'},
+        { instruction: 'Release and relax your feet', duration: 10, animation: 'release'},
+        { instruction: 'Tense your calves and legs', duration: 5, animation: 'squeeze'},
+        { instruction: 'Release and relax your legs', duration: 10, animation: 'release'},
+        { instruction: 'Tense your abdomen and chest', duration: 5, animation: 'squeeze'},
+        { instruction: 'Release and relax your torso', duration: 10, animation: 'release'},
+        { instruction: 'Tense your hands and arms', duration: 5, animation: 'squeeze'},
+        { instruction: 'Release and relax your arms', duration: 10, animation: 'release'},
+        { instruction: 'Tense your shoulders and neck', duration: 5, animation: 'squeeze'},
+        { instruction: 'Release and relax your shoulders', duration: 10, animation: 'release'},
+        { instruction: 'Tense your face muscles', duration: 5, animation: 'squeeze'},
+        { instruction: 'Release and relax your face', duration: 10, animation: 'release'},
+    ],
+  },
+  {
+    id: 'body-scan-meditation',
+    title: 'Body Scan Meditation',
+    icon: <Sparkles className="h-8 w-8 text-blue-500" />,
+    description: 'Mindfully scan your body from head to toe, releasing tension.',
+    science: 'Promotes awareness of physical sensations and helps release unconscious tension.',
+    steps: ['Start at your head', 'Slowly move down your body', 'Notice and release tension'],
+    duration: '10-15 minutes',
+    difficulty: 'Beginner',
+    cycle: [
+      { instruction: 'Focus on your head and scalp', duration: 15, animation: 'observe' },
+      { instruction: 'Notice your face and jaw', duration: 15, animation: 'observe' },
+      { instruction: 'Feel your neck and shoulders', duration: 15, animation: 'observe' },
+      { instruction: 'Scan your arms and hands', duration: 15, animation: 'observe' },
+      { instruction: 'Focus on your chest and breathing', duration: 15, animation: 'observe' },
+      { instruction: 'Notice your abdomen', duration: 15, animation: 'observe' },
+      { instruction: 'Feel your back and spine', duration: 15, animation: 'observe' },
+      { instruction: 'Scan your hips and pelvis', duration: 15, animation: 'observe' },
+      { instruction: 'Notice your thighs and knees', duration: 15, animation: 'observe' },
+      { instruction: 'Feel your calves and feet', duration: 15, animation: 'observe' },
+    ],
+  },
+  {
+    id: 'sleep-breathing',
+    title: 'Sleep Breathing (4-7-8)',
+    icon: <Moon className="h-8 w-8 text-indigo-500" />,
+    description: 'Dr. Andrew Weil\'s technique specifically designed for falling asleep.',
+    science: 'Slows heart rate and activates the parasympathetic nervous system for sleep.',
+    steps: ['Inhale for 4s', 'Hold for 7s', 'Exhale for 8s', 'Repeat 4 cycles'],
+    duration: '2-4 minutes',
+    difficulty: 'Intermediate',
+    cycle: [
+      { instruction: 'Inhale quietly through nose', duration: 4, animation: 'inhale' },
+      { instruction: 'Hold your breath', duration: 7, animation: 'hold' },
+      { instruction: 'Exhale completely through mouth', duration: 8, animation: 'exhale' },
+    ],
+  },
+  {
+    id: 'visualization-technique',
+    title: 'Sleep Visualization',
+    icon: <Eye className="h-8 w-8 text-green-500" />,
+    description: 'Imagine peaceful scenes to quiet the mind for sleep.',
+    science: 'Engages the visual cortex, reducing activity in areas associated with worry and stress.',
+    steps: ['Choose a peaceful scene', 'Engage all your senses', 'Stay focused on details'],
+    duration: '10-20 minutes',
+    difficulty: 'Beginner',
+    cycle: [
+      { instruction: 'Imagine a peaceful beach scene', duration: 30, animation: 'observe' },
+      { instruction: 'Feel the warm sand beneath you', duration: 30, animation: 'observe' },
+      { instruction: 'Hear the gentle waves', duration: 30, animation: 'observe' },
+      { instruction: 'Feel the cool ocean breeze', duration: 30, animation: 'observe' },
+      { instruction: 'See the beautiful sunset colors', duration: 30, animation: 'observe' },
+      { instruction: 'Let yourself drift deeper into peace', duration: 60, animation: 'observe' },
+    ],
+  },
+  {
+    id: 'counting-technique',
+    title: 'Reverse Counting',
+    icon: <Clock className="h-8 w-8 text-orange-500" />,
+    description: 'Count backwards from 100, visualizing each number.',
+    science: 'Occupies the mind with a simple task, preventing racing thoughts.',
+    steps: ['Start at 100', 'Count backwards slowly', 'Visualize each number'],
+    duration: '5-15 minutes',
+    difficulty: 'Beginner',
+    cycle: [
+      { instruction: 'Count backwards from 100', duration: 20, animation: 'observe' },
+      { instruction: 'Visualize each number clearly', duration: 20, animation: 'observe' },
+      { instruction: 'If you lose count, start over', duration: 20, animation: 'observe' },
+      { instruction: 'Let your mind become quiet', duration: 30, animation: 'observe' },
+    ],
+  },
+  {
+    id: 'gratitude-relaxation',
+    title: 'Gratitude Relaxation',
+    icon: <Heart className="h-8 w-8 text-pink-500" />,
+    description: 'Focus on positive thoughts and gratitude before sleep.',
+    science: 'Shifts focus to positive emotions, reducing stress hormones and promoting relaxation.',
+    steps: ['Think of 3 good things', 'Feel grateful for each', 'Let positivity fill your mind'],
+    duration: '5-10 minutes',
+    difficulty: 'Beginner',
+    cycle: [
+      { instruction: 'Think of something you\'re grateful for today', duration: 30, animation: 'observe' },
+      { instruction: 'Feel the warmth of gratitude in your heart', duration: 30, animation: 'observe' },
+      { instruction: 'Think of a person you appreciate', duration: 30, animation: 'observe' },
+      { instruction: 'Remember a happy moment from today', duration: 30, animation: 'observe' },
+      { instruction: 'Let these positive feelings surround you', duration: 60, animation: 'observe' },
     ],
   },
 ];
@@ -155,6 +262,60 @@ const GuidedExercise = ({ exercise, onFinish }) => {
 };
 
 
+const ExerciseGrid = ({ exercises, onStart }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {exercises.map((exercise) => (
+      <Card key={exercise.id} className="group flex flex-col bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-all duration-300 hover:-translate-y-1">
+        <CardHeader className="flex-row items-start gap-4">
+          <div className="p-3 bg-gray-700/50 rounded-lg group-hover:scale-110 transition-transform duration-300">
+            {exercise.icon}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <CardTitle className="text-lg">{exercise.title}</CardTitle>
+              <Badge variant="outline" className="text-xs">
+                {exercise.difficulty}
+              </Badge>
+            </div>
+            <CardDescription className="text-gray-400">{exercise.description}</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-grow space-y-4">
+          <div className="flex items-center gap-4 text-sm text-gray-400">
+            <div className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              {exercise.duration}
+            </div>
+          </div>
+          <div>
+            <h4 className="font-semibold text-sm text-purple-400 mb-2">How it Works</h4>
+            <p className="text-sm text-gray-300 leading-relaxed">{exercise.science}</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-sm text-purple-400 mb-2">Steps</h4>
+            <ul className="space-y-1">
+              {exercise.steps.map((step, i) => (
+                <li key={i} className="text-sm text-gray-300 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-purple-400 rounded-full flex-shrink-0" />
+                  {step}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </CardContent>
+        <div className="p-6 pt-0">
+          <Button 
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700" 
+            onClick={() => onStart(exercise)}
+          >
+            Start {exercise.title.includes('Sleep') || exercise.title.includes('Relaxation') || exercise.title.includes('Body Scan') || exercise.title.includes('Visualization') || exercise.title.includes('Counting') || exercise.title.includes('Gratitude') ? 'Sleep' : 'Breathing'} Exercise
+          </Button>
+        </div>
+      </Card>
+    ))}
+  </div>
+);
+
 export default function GuidedBreathingPage() {
   const [activeExercise, setActiveExercise] = useState(null);
   const session = useSession();
@@ -165,7 +326,7 @@ export default function GuidedBreathingPage() {
     const totalDuration = activeExercise.cycle.reduce((sum, phase) => sum + phase.duration, 0);
 
     if (session?.user?.id) {
-      console.log("Saving breathing exercise:", {
+      console.log("Saving exercise:", {
         userId: session.user.id,
         exercise_name: activeExercise.title,
         duration_seconds: totalDuration
@@ -182,62 +343,122 @@ export default function GuidedBreathingPage() {
       })
       .then(response => {
         if (response.ok) {
-          console.log("Breathing exercise saved successfully");
+          console.log("Exercise saved successfully");
         } else {
-          console.error("Failed to save breathing exercise:", response.status, response.statusText);
+          console.error("Failed to save exercise:", response.status, response.statusText);
         }
       })
-      .catch(error => console.error("Failed to save breathing exercise:", error));
+      .catch(error => console.error("Failed to save exercise:", error));
     } else {
-      console.log("User not logged in, skipping breathing exercise save");
+      console.log("User not logged in, skipping exercise save");
     }
 
     setActiveExercise(null);
   };
 
-  return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">Quick Relief Exercises</h1>
-        <p className="mt-4 text-lg leading-8 text-muted-foreground">
-          Find your center with these guided exercises designed to calm your mind and body in minutes.
-        </p>
-      </div>
+  const breathingFAQs = [
+    {
+      question: "How often should I practice breathing exercises?",
+      answer: "For best results, practice breathing exercises daily. Even 5-10 minutes can make a significant difference in stress levels and overall well-being."
+    },
+    {
+      question: "Can breathing exercises help with anxiety attacks?",
+      answer: "Yes! Box breathing and 4-7-8 breathing are particularly effective during anxiety attacks. They help activate your parasympathetic nervous system and restore calm."
+    },
+    {
+      question: "What's the best time to practice sleep techniques?",
+      answer: "Practice sleep techniques 30-60 minutes before your desired bedtime. Create a consistent routine to signal to your body that it's time to wind down."
+    },
+    {
+      question: "Are these techniques safe for everyone?",
+      answer: "These techniques are generally safe for most people. However, if you have respiratory conditions or feel dizzy during practice, consult with a healthcare provider."
+    },
+    {
+      question: "How long before I see results?",
+      answer: "Many people feel immediate relaxation effects. For long-term benefits like improved sleep quality and reduced anxiety, consistent practice for 2-4 weeks typically shows significant results."
+    }
+  ];
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {exercises.map((exercise) => (
-          <Card key={exercise.id} className="flex flex-col">
-            <CardHeader className="flex-row items-center gap-4">
-              {exercise.icon}
-              <div>
-                <CardTitle>{exercise.title}</CardTitle>
-                <CardDescription>{exercise.description}</CardDescription>
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Hero Section */}
+      <section className="relative py-20 px-4 overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: 'url(https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=2120&auto=format&fit=crop)',
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-900/90 via-purple-900/80 to-indigo-900/90" />
+        </div>
+        
+        <div className="relative z-10 text-center max-w-4xl mx-auto">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <Wind className="w-10 h-10 text-blue-400" />
+            <Badge className="bg-blue-600/20 text-blue-300 border-blue-400/20 text-lg px-4 py-2">
+              Wellness & Sleep Center
+            </Badge>
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent" suppressHydrationWarning>
+            Breathing & Sleep Techniques
+          </h1>
+          <p className="text-xl text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto">
+            Master the art of relaxation with scientifically-proven breathing exercises and sleep techniques. 
+            Find your calm, reduce stress, and improve your sleep quality naturally.
+          </p>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <section className="py-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <Tabs defaultValue="breathing" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-800 border border-gray-700 mb-8">
+              <TabsTrigger 
+                value="breathing" 
+                className="flex items-center gap-2 text-gray-300 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              >
+                <Wind className="w-4 h-4" />
+                Breathing Exercises
+              </TabsTrigger>
+              <TabsTrigger 
+                value="sleep" 
+                className="flex items-center gap-2 text-gray-300 hover:text-white data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+              >
+                <Moon className="w-4 h-4" />
+                Sleep Techniques
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="breathing" className="space-y-8">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold mb-4">Breathing Exercises</h2>
+                <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+                  Quick and effective breathing techniques to reduce stress, anxiety, and promote relaxation
+                </p>
               </div>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-sm text-primary">How it Works</h4>
-                  <p className="text-sm text-muted-foreground">{exercise.science}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-sm text-primary">Steps</h4>
-                  <ul className="list-disc list-inside text-sm text-muted-foreground">
-                    {exercise.steps.map((step, i) => (
-                      <li key={i}>{step}</li>
-                    ))}
-                  </ul>
-                </div>
+              <ExerciseGrid exercises={breathingExercises} onStart={setActiveExercise} />
+            </TabsContent>
+
+            <TabsContent value="sleep" className="space-y-8">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold mb-4">Sleep Techniques</h2>
+                <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+                  Proven methods to help you fall asleep faster and achieve deeper, more restful sleep
+                </p>
               </div>
-            </CardContent>
-            <div className="p-6 pt-0">
-              <Button className="w-full" onClick={() => setActiveExercise(exercise)}>
-                Start Exercise
-              </Button>
-            </div>
-          </Card>
-        ))}
-      </div>
+              <ExerciseGrid exercises={sleepTechniques} onStart={setActiveExercise} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <FAQ 
+        title="Breathing & Sleep FAQ"
+        faqs={breathingFAQs}
+        className="mt-16"
+      />
 
       <AnimatePresence>
         {activeExercise && (

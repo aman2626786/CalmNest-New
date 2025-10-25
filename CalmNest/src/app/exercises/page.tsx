@@ -6,6 +6,7 @@ import { X, Zap, Wind, Brain, Eye, PersonStanding } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
+import { HydrationSafeTranslation } from '@/components/common/HydrationSafeTranslation';
 
 const exercises = [
   {
@@ -150,10 +151,20 @@ export default function GuidedBreathingPage() {
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">{t('title')}</h1>
-        <p className="mt-4 text-lg leading-8 text-muted-foreground">
-          {t('subtitle')}
-        </p>
+        <HydrationSafeTranslation
+          translationKey="title"
+          fallbackText="Breathing & Sleep Techniques"
+          namespace="exercises"
+          as="h1"
+          className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl"
+        />
+        <HydrationSafeTranslation
+          translationKey="subtitle"
+          fallbackText="Master the art of relaxation with scientifically-proven breathing exercises and sleep techniques. Find your calm, reduce stress, and improve your sleep quality naturally."
+          namespace="exercises"
+          as="p"
+          className="mt-4 text-lg leading-8 text-muted-foreground"
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

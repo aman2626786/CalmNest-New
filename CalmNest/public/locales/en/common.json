@@ -22,7 +22,10 @@
   "hero": {
     "title": "Your Mind Matters",
     "subtitle": "A Safe Digital Space for Students to Prioritize their Mental Well-being.",
-    "cta": "Start Self-Check"
+    "cta": "Start Self-Check",
+    "comprehensiveAssessment": "Complete Mental Health Assessment",
+    "comprehensiveDescription": "Comprehensive evaluation combining PHQ-9, GAD-7, Mood Analysis & more",
+    "quickSelfCheck": "Quick Self-Check"
   },
   "features": {
     "title": "Support Designed for You",

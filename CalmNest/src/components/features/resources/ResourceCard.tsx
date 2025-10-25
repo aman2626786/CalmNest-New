@@ -70,38 +70,54 @@ const AudioPlayer = () => {
 
 export const ResourceCard = ({ resource }: ResourceCardProps) => {
   return (
-    <Card className="flex flex-col h-full bg-gray-800 border-gray-700 text-white overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 ease-in-out">
+    <Card className="group flex flex-col h-full bg-gray-800/50 backdrop-blur-sm border-gray-700 text-white overflow-hidden transform hover:-translate-y-3 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 ease-out">
       <CardHeader className="relative p-0">
-        <div className="relative h-48 w-full">
+        <div className="relative h-48 w-full overflow-hidden">
           <Image
             src={resource.imageUrl}
             alt={resource.imageHint}
             fill
             style={{ objectFit: 'cover' }}
+            className="group-hover:scale-110 transition-transform duration-500"
           />
-          <div className="absolute inset-0 bg-black bg-opacity-40" />
-          <Badge className="absolute top-2 left-2 bg-primary/80 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors duration-300" />
+          
+          <Badge className="absolute top-3 left-3 bg-gray-900/80 backdrop-blur-md border border-gray-600 text-white">
             <TypeIcon type={resource.type} />
             {resource.category}
           </Badge>
+          
+          {/* Source badge */}
+          <Badge variant="outline" className="absolute top-3 right-3 bg-white/10 backdrop-blur-md border-white/20 text-white text-xs">
+            {resource.source}
+          </Badge>
         </div>
       </CardHeader>
-      <CardContent className="flex-grow p-4">
-        <CardTitle className="text-lg font-bold mb-2 line-clamp-2">{resource.title}</CardTitle>
-        <p className="text-sm text-gray-300 line-clamp-3">{resource.description}</p>
+      
+      <CardContent className="flex-grow p-6">
+        <CardTitle className="text-xl font-bold mb-3 line-clamp-2 group-hover:text-purple-300 transition-colors duration-300">
+          {resource.title}
+        </CardTitle>
+        <p className="text-sm text-gray-300 line-clamp-3 leading-relaxed">
+          {resource.description}
+        </p>
       </CardContent>
-      <CardFooter className="p-4 pt-0 mt-auto">
+      
+      <CardFooter className="p-6 pt-0 mt-auto">
         {resource.type === 'video' && (
-          <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
-            <a href={resource.url} target="_blank" rel="noopener noreferrer">
+          <Button asChild className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-purple-500/25">
+            <a href={resource.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
+              <PlayCircle className="w-4 h-4" />
               Watch Now
             </a>
           </Button>
         )}
         {resource.type === 'article' && (
-          <Button asChild variant="link" className="w-full text-purple-400 hover:text-purple-300">
-             <a href={resource.url} target="_blank" rel="noopener noreferrer">
-              Read More
+          <Button asChild variant="outline" className="w-full border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white transition-all duration-300">
+             <a href={resource.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Read Article
             </a>
           </Button>
         )}

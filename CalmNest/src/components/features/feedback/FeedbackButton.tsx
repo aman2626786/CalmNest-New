@@ -18,7 +18,7 @@ export function FeedbackButton({ children }: { children: ReactElement }) {
     <>
       {child}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="bg-gray-900 text-white border-gray-700">
+        <DialogContent className="bg-background text-foreground border-border max-w-2xl">
           <FeedbackForm setOpen={setIsOpen} />
         </DialogContent>
       </Dialog>

@@ -15,7 +15,7 @@ i18n
       order: ['cookie', 'localStorage', 'navigator', 'htmlTag'],
       caches: ['cookie', 'localStorage'],
     },
-    ns: ['common', 'phq9', 'gad7', 'suggestions', 'dashboard', 'appointments', 'resources', 'exercises', 'forum'],
+    ns: ['common', 'translation', 'phq9', 'gad7', 'suggestions', 'dashboard', 'appointments', 'resources', 'exercises', 'forum'],
     defaultNS: 'common',
     backend: {
       loadPath: typeof window !== 'undefined' ? '/locales/{{lng}}/{{ns}}.json' : `http://localhost:3000/locales/{{lng}}/{{ns}}.json`,

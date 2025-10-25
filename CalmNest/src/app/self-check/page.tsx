@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowRight, Frown, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
+import { FAQ } from '@/components/common/FAQ';
 
 export default function SelfCheckPage() {
   const { t } = useTranslation('common');
@@ -53,6 +54,38 @@ export default function SelfCheckPage() {
           </Card>
         </motion.div>
       </div>
+
+      {/* FAQ Section */}
+      <FAQ 
+        title="Self-Assessment FAQ"
+        faqs={[
+          {
+            question: "What is the difference between PHQ-9 and GAD-7?",
+            answer: "PHQ-9 (Patient Health Questionnaire-9) screens for depression symptoms, while GAD-7 (Generalized Anxiety Disorder-7) screens for anxiety symptoms. Both are clinically validated tools used by healthcare professionals."
+          },
+          {
+            question: "How long do these assessments take?",
+            answer: "Each assessment takes about 2-3 minutes to complete. PHQ-9 has 9 questions and GAD-7 has 7 questions, all with simple multiple-choice answers."
+          },
+          {
+            question: "Are my results confidential?",
+            answer: "Yes, your assessment results are completely confidential and stored securely. Only you can access your results through your personal dashboard."
+          },
+          {
+            question: "Should I take both assessments?",
+            answer: "We recommend taking both assessments as depression and anxiety often co-occur. This gives you a more complete picture of your mental health status."
+          },
+          {
+            question: "What should I do with my results?",
+            answer: "Use your results to track your mental health over time. If you score high on either assessment, consider speaking with a mental health professional. These tools are for screening purposes and don't replace professional diagnosis."
+          },
+          {
+            question: "How often should I retake these assessments?",
+            answer: "You can retake assessments weekly or whenever you feel your mental health status has changed. Regular monitoring helps track your progress and identify patterns."
+          }
+        ]}
+        className="mt-16"
+      />
     </div>
   );
 }

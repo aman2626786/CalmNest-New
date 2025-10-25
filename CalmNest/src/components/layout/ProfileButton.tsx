@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { useRouter } from 'next/navigation';
+import { useUserProfile } from '@/context/UserProfileContext';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,7 @@ export function ProfileButton() {
   const session = useSession();
   const supabase = useSupabaseClient();
   const router = useRouter();
+  const { profile, loading } = useUserProfile();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -48,9 +50,23 @@ export function ProfileButton() {
     );
   }
 
-  const getInitials = (email: string) => {
+  const getInitials = (name?: string, email?: string) => {
+    if (name && name.trim()) {
+      const names = name.trim().split(' ');
+      if (names.length >= 2) {
+        return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+      }
+      return names[0].charAt(0).toUpperCase();
+    }
     return email ? email.charAt(0).toUpperCase() : '?';
-  }
+  };
+
+  const getUserDisplayName = () => {
+    if (profile?.full_name && profile.full_name.trim()) {
+      return profile.full_name;
+    }
+    return session?.user?.email?.split('@')[0] || 'User';
+  };
 
   return (
     <DropdownMenu>
@@ -59,7 +75,7 @@ export function ProfileButton() {
             <Avatar className="h-8 w-8">
                 {/* <AvatarImage src={session.user?.user_metadata?.avatar_url} alt="User avatar" /> */}
                 <AvatarFallback className="bg-purple-600 text-white">
-                    {getInitials(session.user.email || '')}
+                    {getInitials(profile?.full_name, session.user.email || '')}
                 </AvatarFallback>
             </Avatar>
         </Button>
@@ -67,7 +83,7 @@ export function ProfileButton() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">My Account</p>
+            <p className="text-sm font-medium leading-none">{getUserDisplayName()}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {session.user.email}
             </p>
