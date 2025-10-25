@@ -9,6 +9,12 @@ export const metadata = {
   description: 'A Safe Digital Space for Students to Prioritize their Mental Well-being.',
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: {

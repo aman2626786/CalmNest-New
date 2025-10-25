@@ -47,7 +47,7 @@ export const Hero = () => {
       {/* Content - Render during SSG and when ready on client */}
       {(!isClient || isReady) && (
         <div className="container-custom relative z-10 px-4">
-          <div className="text-center max-w-6xl mx-auto pt-20">
+          <div className="text-center max-w-6xl mx-auto pt-24 sm:pt-20">
             {/* Badge */}
             <motion.div
               className="flex items-center justify-center gap-2 mb-8"
@@ -63,7 +63,7 @@ export const Hero = () => {
 
             {/* Main Title */}
             <motion.h1 
-              className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 bg-gradient-to-r from-white via-purple-200 to-indigo-200 bg-clip-text text-transparent leading-tight"
+              className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-6 sm:mb-8 bg-gradient-to-r from-white via-purple-200 to-indigo-200 bg-clip-text text-transparent leading-tight px-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -73,7 +73,7 @@ export const Hero = () => {
 
             {/* Subtitle */}
             <motion.p 
-              className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed"
+              className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-8 sm:mb-12 leading-relaxed px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
@@ -83,39 +83,40 @@ export const Hero = () => {
 
             {/* Featured CTA - Comprehensive Assessment */}
             <motion.div
-              className="mb-8"
+              className="mb-6 sm:mb-8 px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
             >
-              <Button asChild size="lg" className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-10 py-5 text-xl font-semibold shadow-xl hover:shadow-emerald-500/30 transition-all duration-300 transform hover:scale-105">
-                <Link href="/comprehensive-assessment" className="flex items-center gap-3">
-                  <Activity className="w-6 h-6" />
-                  Complete Mental Health Assessment
-                  <CheckCircle className="w-6 h-6" />
+              <Button asChild size="lg" className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-6 sm:px-10 py-4 sm:py-5 text-lg sm:text-xl font-semibold shadow-xl hover:shadow-emerald-500/30 transition-all duration-300 transform hover:scale-105 w-full sm:w-auto">
+                <Link href="/comprehensive-assessment" className="flex items-center justify-center gap-2 sm:gap-3">
+                  <Activity className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="hidden sm:inline">Complete Mental Health Assessment</span>
+                  <span className="sm:hidden">Complete Assessment</span>
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                 </Link>
               </Button>
-              <p className="text-sm text-gray-400 mt-3 max-w-md mx-auto">
+              <p className="text-sm text-gray-400 mt-3 max-w-md mx-auto px-2">
                 Comprehensive evaluation combining PHQ-9, GAD-7, Mood Analysis & more
               </p>
             </motion.div>
 
             {/* Secondary CTA Buttons */}
             <motion.div
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-12 sm:mb-16 px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.7 }}
             >
-              <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 text-base shadow-lg hover:shadow-purple-500/25 transition-all duration-300">
-                <Link href="/self-check" className="flex items-center gap-2">
+              <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 text-base shadow-lg hover:shadow-purple-500/25 transition-all duration-300 w-full sm:w-auto">
+                <Link href="/self-check" className="flex items-center justify-center gap-2">
                   Quick Self-Check
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
               
-              <Button asChild variant="outline" size="lg" className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white hover:text-gray-900 px-6 py-3 text-base transition-all duration-300">
-                <Link href="/resources" className="flex items-center gap-2">
+              <Button asChild variant="outline" size="lg" className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white hover:text-gray-900 px-6 py-3 text-base transition-all duration-300 w-full sm:w-auto">
+                <Link href="/resources" className="flex items-center justify-center gap-2">
                   <Play className="w-4 h-4" />
                   Explore Resources
                 </Link>
@@ -124,27 +125,27 @@ export const Hero = () => {
 
             {/* Simple Stats */}
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto"
+              className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 max-w-4xl mx-auto px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.8 }}
             >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                <Brain className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-                <div className="text-3xl font-bold text-white mb-2">15+</div>
-                <div className="text-gray-300">Wellness Resources</div>
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/20">
+                <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400 mx-auto mb-2 sm:mb-3" />
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">15+</div>
+                <div className="text-sm sm:text-base text-gray-300">Wellness Resources</div>
               </div>
               
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                <Users className="w-8 h-8 text-indigo-400 mx-auto mb-3" />
-                <div className="text-3xl font-bold text-white mb-2">24/7</div>
-                <div className="text-gray-300">Community Support</div>
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/20">
+                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-400 mx-auto mb-2 sm:mb-3" />
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">24/7</div>
+                <div className="text-sm sm:text-base text-gray-300">Community Support</div>
               </div>
               
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                <Star className="w-8 h-8 text-yellow-400 mx-auto mb-3" />
-                <div className="text-3xl font-bold text-white mb-2">100%</div>
-                <div className="text-gray-300">Free & Private</div>
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/20">
+                <Star className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400 mx-auto mb-2 sm:mb-3" />
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">100%</div>
+                <div className="text-sm sm:text-base text-gray-300">Free & Private</div>
               </div>
             </motion.div>
           </div>
