@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { localAuth } from '@/lib/localAuth';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { useTranslation, Trans } from 'react-i18next';
 import { TestPerformanceChart } from '@/components/features/dashboard/TestPerformanceChart';
@@ -79,6 +79,7 @@ interface FacialAnalysisData {
 
 const DashboardPage = () => {
   const session = useSession();
+  const { user: authUser } = useAuth();
   const { t } = useTranslation('dashboard');
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [facialAnalysisData, setFacialAnalysisData] = useState<FacialAnalysisData | null>(null);
@@ -101,7 +102,7 @@ const DashboardPage = () => {
   }, []);
 
   useEffect(() => {
-    const currentUser = session?.user || localUser;
+    const currentUser = session?.user || authUser;
     
     if (currentUser?.id && currentUser?.email) {
       const fetchData = async () => {
@@ -121,7 +122,7 @@ const DashboardPage = () => {
           }));
 
           // For local auth users, show sample data instead of API calls
-          if (localUser && !session?.user?.id) {
+          if (authUser && !session?.user?.id) {
             console.log('Dashboard: Using sample data for local auth user');
             
             // Set sample data for local auth users
@@ -192,7 +193,7 @@ const DashboardPage = () => {
     } else {
       setLoading(false);
     }
-  }, [session, localUser]);
+  }, [session, authUser]);
 
   const handleDownloadImage = (format: 'png' | 'jpg' = 'png') => {
     if (!dashboardRef.current) return;
@@ -249,15 +250,8 @@ const DashboardPage = () => {
     );
   }
 
-  // Check for authentication (Supabase session or local auth)
-  const [localUser, setLocalUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const user = localAuth.getCurrentUser();
-    setLocalUser(user);
-    setIsAuthenticated(session?.user?.id || user);
-  }, [session]);
+  // Check for authentication
+  const isAuthenticated = session?.user?.id || authUser;
 
   if (!isAuthenticated) {
     return (

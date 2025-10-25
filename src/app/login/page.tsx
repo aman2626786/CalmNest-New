@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { localAuth, autoConfirmEmail } from '@/lib/localAuth';
+import { useAuth } from '@/context/AuthContext';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,85 +17,41 @@ export default function LoginPage() {
   const [gender, setGender] = useState('');
   const [message, setMessage] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { user, signUp, signIn, loading } = useAuth();
 
+  // Redirect if user is already logged in
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        // Only redirect if user is confirmed (not just signed up)
-        if (session.user.email_confirmed_at) {
-          setMessage('Successfully signed in! Redirecting...');
-          setTimeout(() => {
-            router.push('/dashboard');
-          }, 1000);
-        } else {
-          setMessage('Please check your email and confirm your account before signing in.');
-        }
-      } else if (event === 'SIGNED_OUT') {
-        // Don't automatically redirect on sign out from login page
-        setMessage('');
-      }
-    });
-
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, [router]);
+    if (user && !loading) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
+    setIsLoading(true);
     
     // Validate required fields
     if (!email || !password || !fullName || !age || !gender) {
       setMessage('Please fill in all required fields.');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      setMessage('Password must be at least 6 characters long.');
+      setIsLoading(false);
       return;
     }
 
     try {
-      // Check if we should use local auth
-      if (localAuth.isLocalAuth()) {
-        console.log('Using local authentication for development');
-        
-        const result = await localAuth.signUp(email, password, {
-          full_name: fullName,
-          age: parseInt(age, 10),
-          gender: gender,
-        });
-        
-        setMessage('Account created successfully! Email confirmation simulated for development.');
-        
-        // Auto-confirm email for development
-        autoConfirmEmail(email);
-        
-        // Clear form
-        setEmail('');
-        setPassword('');
-        setFullName('');
-        setAge('');
-        setGender('');
-        // Switch to sign in mode
-        setIsSignUp(false);
-        
-        // Show additional message
-        setTimeout(() => {
-          setMessage('Email confirmed! You can now sign in with your credentials.');
-        }, 3000);
-        
-        return;
-      }
-
-      // Use real Supabase if configured
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            age: parseInt(age, 10),
-            gender: gender,
-          }
-        }
+      const { error } = await signUp(email, password, {
+        full_name: fullName,
+        age: parseInt(age, 10),
+        gender: gender,
       });
 
       if (error) {
@@ -115,54 +70,40 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error('Signup error:', error);
       setMessage(`Error signing up: ${error.message || 'Please try again.'}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
+    setIsLoading(true);
     
     // Validate required fields
     if (!email || !password) {
       setMessage('Please enter both email and password.');
+      setIsLoading(false);
       return;
     }
 
     try {
-      // Check if we should use local auth
-      if (localAuth.isLocalAuth()) {
-        console.log('Using local authentication for development');
-        
-        const result = await localAuth.signIn(email, password);
-        setMessage('Successfully signed in! Redirecting to home page...');
-        
-        // Clear form
-        setEmail('');
-        setPassword('');
-        
-        // Redirect to home page
-        setTimeout(() => {
-          router.push('/');
-        }, 1000);
-        
-        return;
-      }
-
-      // Use real Supabase if configured
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await signIn(email, password);
       
       if (error) {
         setMessage(`Error signing in: ${error.message}`);
       } else {
-        setMessage('Signing in...');
-        // The onAuthStateChange listener will handle the redirect
+        setMessage('Successfully signed in! Redirecting...');
+        // Clear form
+        setEmail('');
+        setPassword('');
+        // The AuthContext will handle the redirect
       }
     } catch (error: any) {
       console.error('Signin error:', error);
       setMessage(`Error signing in: ${error.message || 'Please check your credentials and try again.'}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -239,7 +180,13 @@ export default function LoginPage() {
             </div>
             {message && <p className="text-center text-sm text-gray-300">{message}</p>}
             <div className="flex flex-col space-y-4">
-                <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">{isSignUp ? 'Sign Up' : 'Sign In'}</Button>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-purple-600 hover:bg-purple-700" 
+                  disabled={isLoading || loading}
+                >
+                  {isLoading ? 'Please wait...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+                </Button>
                 <Button onClick={() => setIsSignUp(!isSignUp)} variant="link" type="button" className="w-full text-purple-400 hover:text-purple-300">
                   {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
                 </Button>

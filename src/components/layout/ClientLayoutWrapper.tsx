@@ -10,6 +10,7 @@ import { Header } from '@/components/layout/Header';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from '@/lib/supabase/client';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { AuthProvider } from '@/context/AuthContext';
 
 declare global {
   interface Window {
@@ -30,19 +31,21 @@ export default function ClientLayoutWrapper({ children }: ClientLayoutWrapperPro
         enableSystem
         disableTransitionOnChange
       >
-        <SessionContextProvider supabaseClient={supabase}>
-          <UserProfileProvider>
-            <I18nProvider>
-              <MoodProvider>
-                <ResultsProvider>
-                  <VoiceflowContextUpdater />
-                  <Header />
-                  <main className="pt-20">{children}</main>
-                </ResultsProvider>
-              </MoodProvider>
-            </I18nProvider>
-          </UserProfileProvider>
-        </SessionContextProvider>
+        <AuthProvider>
+          <SessionContextProvider supabaseClient={supabase}>
+            <UserProfileProvider>
+              <I18nProvider>
+                <MoodProvider>
+                  <ResultsProvider>
+                    <VoiceflowContextUpdater />
+                    <Header />
+                    <main className="pt-20">{children}</main>
+                  </ResultsProvider>
+                </MoodProvider>
+              </I18nProvider>
+            </UserProfileProvider>
+          </SessionContextProvider>
+        </AuthProvider>
       </ThemeProvider>
 
       <Script
