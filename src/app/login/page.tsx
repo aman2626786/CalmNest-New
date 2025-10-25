@@ -134,15 +134,15 @@ export default function LoginPage() {
         console.log('Using local authentication for development');
         
         const result = await localAuth.signIn(email, password);
-        setMessage('Successfully signed in! Redirecting to dashboard...');
+        setMessage('Successfully signed in! Redirecting to home page...');
         
         // Clear form
         setEmail('');
         setPassword('');
         
-        // Redirect to dashboard
+        // Redirect to home page
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/');
         }, 1000);
         
         return;

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
+import { localAuth } from '@/lib/localAuth';
 import Link from 'next/link';
 import { useTranslation, Trans } from 'react-i18next';
 import { TestPerformanceChart } from '@/components/features/dashboard/TestPerformanceChart';
@@ -100,27 +101,57 @@ const DashboardPage = () => {
   }, []);
 
   useEffect(() => {
-    if (session?.user?.id && session?.user?.email) {
+    const currentUser = session?.user || localUser;
+    
+    if (currentUser?.id && currentUser?.email) {
       const fetchData = async () => {
         try {
-          localStorage.setItem('userEmail', session.user.email || '');
-          localStorage.setItem('userId', session.user.id);
+          localStorage.setItem('userEmail', currentUser.email || '');
+          localStorage.setItem('userId', currentUser.id);
 
           console.log('Dashboard: Fetching data for user:', {
-            userId: session.user.id,
-            userEmail: session.user.email
+            userId: currentUser.id,
+            userEmail: currentUser.email
           });
 
           localStorage.setItem('debug_user_info', JSON.stringify({
-            userId: session.user.id,
-            userEmail: session.user.email,
+            userId: currentUser.id,
+            userEmail: currentUser.email,
             timestamp: new Date().toISOString()
           }));
 
-          // Debug: Test the exact API call
-          console.log('Dashboard: API URL:', `http://127.0.0.1:5001/api/dashboard/unified/${session.user.id}/${session.user.email}`);
+          // For local auth users, show sample data instead of API calls
+          if (localUser && !session?.user?.id) {
+            console.log('Dashboard: Using sample data for local auth user');
+            
+            // Set sample data for local auth users
+            setDashboardData({
+              test_submissions: [],
+              mood_groove_results: [],
+              breathing_exercises: [],
+              comprehensive_assessments: []
+            });
+            
+            setStats({
+              totalTests: 0,
+              moodGrooveResults: 0,
+              breathingExercises: 0,
+              facialSessions: 0
+            });
+            
+            setFacialAnalysisData({
+              facial_analysis_sessions: [],
+              total_sessions: 0
+            });
+            
+            setLoading(false);
+            return;
+          }
 
-          const unifiedResponse = await fetch(`http://127.0.0.1:5001/api/dashboard/unified/${session.user.id}/${session.user.email}`);
+          // Debug: Test the exact API call for real users
+          console.log('Dashboard: API URL:', `http://127.0.0.1:5001/api/dashboard/unified/${currentUser.id}/${currentUser.email}`);
+
+          const unifiedResponse = await fetch(`http://127.0.0.1:5001/api/dashboard/unified/${currentUser.id}/${currentUser.email}`);
           
           console.log('Dashboard: Unified response status:', unifiedResponse.status);
           
@@ -161,7 +192,7 @@ const DashboardPage = () => {
     } else {
       setLoading(false);
     }
-  }, [session]);
+  }, [session, localUser]);
 
   const handleDownloadImage = (format: 'png' | 'jpg' = 'png') => {
     if (!dashboardRef.current) return;
@@ -218,13 +249,23 @@ const DashboardPage = () => {
     );
   }
 
-  if (!session) {
+  // Check for authentication (Supabase session or local auth)
+  const [localUser, setLocalUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const user = localAuth.getCurrentUser();
+    setLocalUser(user);
+    setIsAuthenticated(session?.user?.id || user);
+  }, [session]);
+
+  if (!isAuthenticated) {
     return (
       <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center text-center">
         <div>
-          <p className="text-lg">{t('notLoggedIn')}</p>
-          <Link href="/login" className="text-blue-400 hover:underline">
-            {t('loginToView')}
+          <p className="text-lg mb-4">Please sign in to view your dashboard</p>
+          <Link href="/login" className="text-blue-400 hover:underline text-lg">
+            Sign In
           </Link>
         </div>
       </div>
