@@ -28,6 +28,28 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
   const supabase = useSupabaseClient();
 
   const fetchProfile = async () => {
+    // Check for demo user first
+    const demoUser = localStorage.getItem('demo_user');
+    if (demoUser && !session?.user?.id) {
+      try {
+        const demoProfile = JSON.parse(demoUser);
+        const userProfile: UserProfile = {
+          id: demoProfile.id,
+          email: demoProfile.email,
+          full_name: demoProfile.full_name,
+          age: demoProfile.age,
+          gender: demoProfile.gender,
+        };
+        setProfile(userProfile);
+        setLoading(false);
+        console.log('Using demo profile:', userProfile);
+        return;
+      } catch (error) {
+        console.error('Error parsing demo user:', error);
+        localStorage.removeItem('demo_user');
+      }
+    }
+
     if (!session?.user?.id) {
       setProfile(null);
       setLoading(false);
@@ -175,14 +197,21 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
       console.log('UserProfileContext: Session detected, fetching profile for:', session.user.id);
       fetchProfile();
     } else {
-      console.log('UserProfileContext: No session, clearing profile data');
-      setProfile(null);
-      setLoading(false);
-      // Clear localStorage when no session
-      localStorage.removeItem('userProfile');
-      localStorage.removeItem('userName');
-      localStorage.removeItem('userEmail');
-      localStorage.removeItem('userId');
+      // Check for demo user when no session
+      const demoUser = localStorage.getItem('demo_user');
+      if (demoUser) {
+        console.log('UserProfileContext: No session but demo user found, fetching demo profile');
+        fetchProfile();
+      } else {
+        console.log('UserProfileContext: No session and no demo user, clearing profile data');
+        setProfile(null);
+        setLoading(false);
+        // Clear localStorage when no session and no demo user
+        localStorage.removeItem('userProfile');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userId');
+      }
     }
   }, [session?.user?.id]);
 
