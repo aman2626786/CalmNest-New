@@ -56,3 +56,52 @@ export async function getFeaturedFeedback(): Promise<{ feedback?: Feedback[], er
       return { error: error instanceof Error ? error.message : "Unknown error" };
     }
 }
+
+// Missing functions for appointments and forum
+export async function saveBooking(bookingData: any) {
+  try {
+    // Placeholder implementation
+    console.log('Booking saved:', bookingData);
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving booking:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}
+
+export async function getForumPost(postId: string) {
+  try {
+    // Placeholder implementation
+    return { 
+      id: postId, 
+      title: 'Sample Post', 
+      content: 'Sample content',
+      author: 'Sample Author',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("Error fetching forum post:", error);
+    return null;
+  }
+}
+
+export async function getReplies(postId: string) {
+  try {
+    // Placeholder implementation
+    return [];
+  } catch (error) {
+    console.error("Error fetching replies:", error);
+    return [];
+  }
+}
+
+export async function createReply(replyData: any) {
+  try {
+    // Placeholder implementation
+    console.log('Reply created:', replyData);
+    return { success: true };
+  } catch (error) {
+    console.error("Error creating reply:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}
