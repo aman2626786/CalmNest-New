@@ -9,6 +9,7 @@ import { MoodGrooveChart } from '@/components/features/dashboard/MoodGrooveChart
 import { SummaryCard } from '@/components/features/dashboard/SummaryCard';
 import { FacialAnalysisChart } from '@/components/features/dashboard/FacialAnalysisChart';
 import { TestSubmission, MoodGrooveResult } from '@/types';
+import html2canvas from 'html2canvas';
 
 interface FacialAnalysisSession {
   id: number;
@@ -24,7 +25,6 @@ interface FacialAnalysisSession {
   raw_data: any[];
   timestamp: string;
 }
-import html2canvas from 'html2canvas';
 import { DateRange } from 'react-day-picker';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
