@@ -52,7 +52,7 @@ if (isServer) {
     .use(initReactI18next)
     .init({
       ...baseConfig,
-      debug: false,
+      debug: false, // Force rebuild
       initImmediate: false,
       resources,
     });
