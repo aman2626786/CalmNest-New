@@ -1,0 +1,167 @@
+[
+  {
+    "id": "video-1",
+    "type": "video",
+    "category": "Stress",
+    "title": "Guided Meditation for Stress Relief (10 Minutes)",
+    "description": "A short, guided meditation session to help you find calm and focus in just 10 minutes. Perfect for beginners.",
+    "source": "CalmTube",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1506126613408-4e05860f5b54?q=80&w=2070&auto=format&fit=crop",
+    "imageHint": "woman meditating on a rock by the water at sunset"
+  },
+  {
+    "id": "article-1",
+    "type": "article",
+    "category": "Anxiety",
+    "title": "Understanding and Managing Anxiety",
+    "description": "An in-depth article exploring the causes of anxiety and practical strategies for managing its symptoms in daily life.",
+    "source": "Wellness Weekly",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1558022285-10534fa75a83?q=80&w=1935&auto=format&fit=crop",
+    "imageHint": "a person writing in a journal with a cup of tea"
+  },
+  {
+    "id": "audio-1",
+    "type": "audio",
+    "category": "Mindfulness",
+    "title": "Mindful Breathing Exercise",
+    "description": "A simple 5-minute audio guide to practice mindful breathing, a powerful technique to ground yourself.",
+    "source": "AudioCalm",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1519824145371-2ae6a898612c?q=80&w=2070&auto=format&fit=crop",
+    "imageHint": "close up of headphones on a wooden table"
+  },
+  {
+    "id": "video-2",
+    "type": "video",
+    "category": "Stress",
+    "title": "Yoga for Relaxation",
+    "description": "Follow along with this gentle yoga routine designed to release tension from your body and calm your mind.",
+    "source": "YogaFlow",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=2120&auto=format&fit=crop",
+    "imageHint": "woman doing yoga on a beach"
+  },
+  {
+    "id": "article-2",
+    "type": "article",
+    "category": "Mindfulness",
+    "title": "The Benefits of a Digital Detox",
+    "description": "Learn how taking a break from screens can improve your mental well-being and increase your focus.",
+    "source": "Mindful Living",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1586322354912-b4a7f2c71063?q=80&w=1974&auto=format&fit=crop",
+    "imageHint": "a smartphone lying face down on a wooden table next to a plant"
+  },
+  {
+    "id": "audio-2",
+    "type": "audio",
+    "category": "Anxiety",
+    "title": "Positive Affirmations for Anxiety",
+    "description": "Listen to these positive affirmations to challenge anxious thoughts and cultivate a more positive mindset.",
+    "source": "AudioCalm",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1608403338980-3452631142d1?q=80&w=1974&auto=format&fit=crop",
+    "imageHint": "a person speaking into a microphone in a recording studio"
+  },
+  {
+    "id": "video-3",
+    "type": "video",
+    "category": "Sleep",
+    "title": "Sleep Stories for Better Rest",
+    "description": "Calming bedtime stories designed to help you drift off to peaceful sleep. Perfect for insomnia relief.",
+    "source": "SleepWell",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?q=80&w=2060&auto=format&fit=crop",
+    "imageHint": "cozy bedroom with soft lighting and comfortable bedding"
+  },
+  {
+    "id": "article-3",
+    "type": "article",
+    "category": "Depression",
+    "title": "Recognizing Signs of Depression",
+    "description": "Learn to identify early warning signs of depression and discover when it's time to seek professional help.",
+    "source": "Mental Health Today",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1976&auto=format&fit=crop",
+    "imageHint": "person sitting by window looking thoughtful"
+  },
+  {
+    "id": "audio-3",
+    "type": "audio",
+    "category": "Sleep",
+    "title": "Nature Sounds for Deep Sleep",
+    "description": "8 hours of gentle rain and forest sounds to help you achieve deep, restorative sleep naturally.",
+    "source": "NatureSounds",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2071&auto=format&fit=crop",
+    "imageHint": "peaceful forest with rain drops on leaves"
+  },
+  {
+    "id": "video-4",
+    "type": "video",
+    "category": "Mindfulness",
+    "title": "Body Scan Meditation",
+    "description": "A 20-minute guided body scan meditation to help you connect with your body and release physical tension.",
+    "source": "MindfulMoments",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1593811167562-9cef47bfc4d7?q=80&w=2072&auto=format&fit=crop",
+    "imageHint": "person lying down in meditation pose"
+  },
+  {
+    "id": "article-4",
+    "type": "article",
+    "category": "Stress",
+    "title": "Workplace Stress Management",
+    "description": "Practical strategies for managing stress in professional environments and maintaining work-life balance.",
+    "source": "Career Wellness",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?q=80&w=2070&auto=format&fit=crop",
+    "imageHint": "organized desk with plants and natural lighting"
+  },
+  {
+    "id": "audio-4",
+    "type": "audio",
+    "category": "Motivation",
+    "title": "Daily Motivation Podcast",
+    "description": "Start your day with inspiring stories and practical tips for building resilience and maintaining positive mental health.",
+    "source": "MindBoost",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?q=80&w=2070&auto=format&fit=crop",
+    "imageHint": "sunrise over mountains with inspirational atmosphere"
+  },
+  {
+    "id": "video-5",
+    "type": "video",
+    "category": "Anxiety",
+    "title": "Breathing Techniques for Panic Attacks",
+    "description": "Learn effective breathing exercises that can help you manage panic attacks and reduce anxiety symptoms.",
+    "source": "AnxietyHelp",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=2070&auto=format&fit=crop",
+    "imageHint": "person practicing breathing exercises in nature"
+  },
+  {
+    "id": "article-5",
+    "type": "article",
+    "category": "Self-Care",
+    "title": "Building a Self-Care Routine",
+    "description": "Discover how to create a sustainable self-care routine that fits your lifestyle and supports your mental wellness.",
+    "source": "SelfCare Central",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=2070&auto=format&fit=crop",
+    "imageHint": "spa-like setting with candles and bath products"
+  },
+  {
+    "id": "audio-5",
+    "type": "audio",
+    "category": "Mindfulness",
+    "title": "Walking Meditation Guide",
+    "description": "Transform your daily walks into mindful meditation sessions with this gentle audio guide.",
+    "source": "MindfulWalks",
+    "url": "#",
+    "imageUrl": "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?q=80&w=2070&auto=format&fit=crop",
+    "imageHint": "person walking peacefully on a forest path"
+  }
+]
