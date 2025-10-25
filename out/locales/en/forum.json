@@ -1,0 +1,27 @@
+{
+  "title": "Peer Support Forum",
+  "subtitle": "A safe and anonymous space to share, connect, and support one another.",
+  "newPost": "Create a New Post",
+  "features": {
+    "anonymous": {
+      "title": "Anonymous Sharing",
+      "description": "Your identity is always protected. Share openly without fear of judgment."
+    },
+    "community": {
+      "title": "Community Support",
+      "description": "Connect with peers who understand what you're going through."
+    },
+    "constructive": {
+      "title": "Constructive Conversations",
+      "description": "Engage in helpful and supportive discussions, moderated for safety."
+    }
+  },
+  "recentDiscussions": "Recent Discussions",
+  "error": "An unexpected error occurred.",
+  "noPosts": {
+    "title": "No posts yet.",
+    "subtitle": "Be the first to start a conversation!"
+  },
+  "reply": "Reply",
+  "replies": "Replies"
+}

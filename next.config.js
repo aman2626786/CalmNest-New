@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   reactStrictMode: true,
   swcMinify: true,
   trailingSlash: true,
@@ -24,7 +25,6 @@ const nextConfig = {
     ],
     unoptimized: true,
   },
-  // Disable server-side features for static export
   experimental: {
     esmExternals: false,
   },

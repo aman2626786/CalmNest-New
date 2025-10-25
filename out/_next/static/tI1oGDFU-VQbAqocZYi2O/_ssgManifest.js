@@ -1,0 +1,1 @@
+self.__SSG_MANIFEST=new Set(["\u002Fappointments\u002F[id]","\u002Fcomprehensive-assessment\u002F[sessionId]","\u002Fforum\u002F[postId]","\u002Fself-check\u002F[test]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()

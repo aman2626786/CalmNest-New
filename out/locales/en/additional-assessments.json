@@ -1,0 +1,76 @@
+{
+  "title": "Additional Wellness Assessments",
+  "description": "Brief assessments to understand your resilience, stress levels, sleep quality, and social support.",
+  "completeButton": "Complete Additional Assessments",
+  
+  "resilience": {
+    "title": "Brief Resilience Scale",
+    "description": "Please indicate how much you agree or disagree with each statement.",
+    "questions": [
+      { "id": "brs-1", "text": "I tend to bounce back quickly after hard times" },
+      { "id": "brs-2", "text": "I have a hard time making it through stressful events" },
+      { "id": "brs-3", "text": "It does not take me long to recover from a stressful event" },
+      { "id": "brs-4", "text": "It is hard for me to snap back when something bad happens" },
+      { "id": "brs-5", "text": "I usually come through difficult times with little trouble" },
+      { "id": "brs-6", "text": "I tend to take a long time to get over set-backs in my life" }
+    ],
+    "options": {
+      "1": "Strongly Disagree",
+      "2": "Disagree", 
+      "3": "Neutral",
+      "4": "Agree",
+      "5": "Strongly Agree"
+    }
+  },
+  
+  "stress": {
+    "title": "Perceived Stress Scale",
+    "description": "The questions ask about your feelings and thoughts during the last month.",
+    "questions": [
+      { "id": "pss-1", "text": "In the last month, how often have you felt that you were unable to control the important things in your life?" },
+      { "id": "pss-2", "text": "In the last month, how often have you felt confident about your ability to handle your personal problems?" },
+      { "id": "pss-3", "text": "In the last month, how often have you felt that things were going your way?" },
+      { "id": "pss-4", "text": "In the last month, how often have you felt difficulties were piling up so high that you could not overcome them?" }
+    ],
+    "options": {
+      "0": "Never",
+      "1": "Almost Never",
+      "2": "Sometimes",
+      "3": "Fairly Often",
+      "4": "Very Often"
+    }
+  },
+  
+  "sleep": {
+    "title": "Sleep Quality Assessment",
+    "questions": [
+      { "id": "sleep-1", "text": "During the past month, how would you rate your sleep quality overall?" },
+      { "id": "sleep-2", "text": "During the past month, how often have you had trouble sleeping because you cannot get to sleep within 30 minutes?" },
+      { "id": "sleep-3", "text": "During the past month, how often have you had trouble sleeping because you wake up in the middle of the night or early morning?" }
+    ],
+    "options": {
+      "0": "Very Good",
+      "1": "Fairly Good",
+      "2": "Fairly Bad",
+      "3": "Very Bad"
+    }
+  },
+  
+  "social": {
+    "title": "Social Support Assessment",
+    "questions": [
+      { "id": "social-1", "text": "There is a special person who is around when I am in need" },
+      { "id": "social-2", "text": "I have a special person who is a real source of comfort to me" },
+      { "id": "social-3", "text": "My friends really try to help me" }
+    ],
+    "options": {
+      "1": "Very Strongly Disagree",
+      "2": "Strongly Disagree",
+      "3": "Mildly Disagree",
+      "4": "Neutral",
+      "5": "Mildly Agree",
+      "6": "Strongly Agree",
+      "7": "Very Strongly Agree"
+    }
+  }
+}

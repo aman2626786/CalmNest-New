@@ -1,0 +1,12 @@
+{
+  "title": "डैशबोर्ड",
+  "moodAnalysis": "मूड विश्लेषण",
+  "currentMood": "वर्तमान मूड",
+  "confidence": "आत्मविश्वास",
+  "mentalHealthIndicators": "मानसिक स्वास्थ्य संकेतक",
+  "depressionSigns": "अवसाद के लक्षण",
+  "anxietySigns": "चिंता के लक्षण",
+  "noLiveData": "कोई लाइव मूड डेटा उपलब्ध नहीं है।",
+  "goToMoodGroove": "कृपया <1>मूड ग्रूव</1> पेज पर जाएं और अपना लाइव विश्लेषण देखने के लिए कैमरा शुरू करें।",
+  "screeningHistory": "स्क्रीनिंग इतिहास"
+}

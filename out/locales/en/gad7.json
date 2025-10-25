@@ -1,0 +1,77 @@
+{
+  "title": "GAD-7 Anxiety Screening",
+  "description": "Over the last 2 weeks, how often have you been bothered by any of the following problems?",
+  "questions": [
+    { "id": "gad7-1", "text": "Feeling nervous, anxious, or on edge" },
+    { "id": "gad7-2", "text": "Not being able to stop or control worrying" },
+    { "id": "gad7-3", "text": "Worrying too much about different things" },
+    { "id": "gad7-4", "text": "Trouble relaxing" },
+    { "id": "gad7-5", "text": "Being so restless that it is hard to sit still" },
+    { "id": "gad7-6", "text": "Becoming easily annoyed or irritable" },
+    { "id": "gad7-7", "text": "Feeling afraid, as if something awful might happen" }
+  ],
+  "options": {
+    "0": "Not at all",
+    "1": "Several days",
+    "2": "More than half the days",
+    "3": "Nearly every day"
+  },
+  "severityLevels": {
+    "minimal": "Minimal Anxiety",
+    "mild": "Mild Anxiety",
+    "moderate": "Moderate Anxiety",
+    "severe": "Severe Anxiety"
+  },
+  "scoreRanges": [
+    { "min": 0, "max": 4, "label": "minimal" },
+    { "min": 5, "max": 9, "label": "mild" },
+    { "min": 10, "max": 14, "label": "moderate" },
+    { "min": 15, "max": 21, "label": "severe" }
+  ],
+  "guidance": {
+    "minimal": {
+      "title": "Minimal Anxiety",
+      "summary": "This indicates little to no anxiety symptoms. You probably feel generally calm and able to cope with stress.",
+      "points": [
+        "Enjoy wellness practices. Keep doing things that make you feel relaxed – regular exercise, hobbies, social activities – to maintain this balance.",
+        "Preventative self-care. Even if anxiety is low, continue healthy habits: enough sleep, balanced meals, and some physical activity (e.g. a daily walk) help your mind stay steady.",
+        "Mindfulness and relaxation. Short practices like deep breathing or progressive muscle relaxation can keep mild worries from growing. Apps like MindShift CBT (focused on anxiety) can introduce these techniques in a friendly way.",
+        "Connect with others. Keep talking with friends and family about daily stresses. Sharing even small worries can prevent them from building up later.",
+        "Stay aware. Continue to check in with yourself. If you start to notice more frequent worries or tension, use self-help tools or consider whether some extra support (like an online therapy course) might help."
+      ]
+    },
+    "mild": {
+      "title": "Mild Anxiety",
+      "summary": "Mild anxiety means you feel some tension or worry, but it isn’t overwhelming. These symptoms are generally manageable and often improve with simple strategies.",
+      "points": [
+        "Lifestyle adjustments. Practice stress-relief activities: for example, set aside time for light exercise (even short walks help), regular sleep routines, and hobbies you enjoy. Reducing caffeine or alcohol can also help keep anxiety lower.",
+        "Stress-management techniques. Incorporate relaxation into your day – try guided imagery, short meditation breaks, or gentle yoga. Even a few minutes of deep breathing when stressed can calm your nervous system.",
+        "Support and talk. Discuss your feelings with someone you trust. You might also try anonymous peer support (forums, chat groups) for people managing anxiety.",
+        "Helpful apps/resources. Use apps designed for mild anxiety: Sanvello, Happify, or MindShift CBT offer exercises in CBT and coping strategies. These can teach you to challenge anxious thoughts in a user-friendly way.",
+        "Monitor symptoms. Keep an eye on your anxiety level. If worries start to interfere more with work or social life, it’s time to step up care (e.g. schedule a check-in with a counselor)."
+      ]
+    },
+    "moderate": {
+      "title": "Moderate Anxiety",
+      "summary": "This score means anxiety is more noticeable and may begin to interfere with routines. You might feel restless, have trouble concentrating, or avoid some triggers.",
+      "points": [
+        "Try structured strategies. Learning simple CBT techniques can help. For example, write down anxious thoughts and question them (“Is this worry realistic?”). Many people find that challenging fear-based thoughts eases anxiety over time.",
+        "Relaxation practice. Make daily relaxation a habit. Progressive muscle relaxation, mindfulness meditation, or listening to calming music for 10–15 minutes can significantly reduce tension.",
+        "Stay active. Regular physical activity (like jogging, cycling, or a dance class) releases endorphins and combats anxiety. Even mild exercise several times a week can make a big difference.",
+        "Seek professional help if needed. If anxiety is persistent and affecting daily life (sleep, relationships, work), consider talking to a therapist. CBT therapy or even an online counseling session can teach you tailored coping skills.",
+        "Use support tools. Continue using helpful apps (e.g. anxiety-management or meditation apps). Consider brief self-help programs – for instance, an online CBT course – to guide you through anxiety management exercises step by step."
+      ]
+    },
+    "severe": {
+      "title": "Severe Anxiety",
+      "summary": "A severe score indicates that anxiety is significantly disrupting your life. Urgent attention is important.",
+      "points": [
+        "Get professional care. Seek help promptly from a mental health professional (therapist or psychiatrist). You may benefit from a formal treatment plan combining therapy and possibly medication. Early treatment often leads to better outcomes.",
+        "Safety plan. If anxiety causes panic attacks or thoughts of harm, create a coping plan. Identify what helps you calm down (a friend to call, a quiet room, emergency breathing techniques) and have crisis numbers (like 988 in the US) handy.",
+        "Lifestyle changes. Pay extra attention to daily habits: aim for consistent 7–9 hours of sleep, reduce stimulants (caffeine, sugar), and eat regular nutritious meals. Gentle movement (yoga, tai chi, or stretching) can relieve physical tension.",
+        "Support network. Tell close friends/family about your anxiety level so they can support you. Sometimes even having someone walk beside you when feeling anxious (for example, in a busy place) can help. Consider joining a more structured support group or workshop for anxiety.",
+        "Intensive strategies. If standard self-help isn’t enough, look into more intensive programs. This could include daily mindfulness practice, attending group therapy (which is often free or low-cost), or enrolling in a stress-management course."
+      ]
+    }
+  }
+}

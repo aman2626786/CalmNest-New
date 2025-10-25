@@ -1,0 +1,117 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "selfCheck": "Self-Check",
+    "appointments": "Appointments",
+    "resources": "Resources",
+    "forum": "Forum",
+    "exercises": "Exercises",
+    "musicTherapy": "Music Therapy",
+    "moodGroove": "Mood Groove"
+  },
+  "hero": {
+    "title": "Your Mind Matters",
+    "subtitle": "A Safe Digital Space for Students to Prioritize their Mental Well-being.",
+    "cta": "Start Self-Check",
+    "comprehensiveAssessment": "Complete Mental Health Assessment",
+    "comprehensiveDescription": "Comprehensive evaluation combining PHQ-9, GAD-7, Mood Analysis & more",
+    "quickSelfCheck": "Quick Self-Check"
+  },
+  "features": {
+    "title": "Features",
+    "subtitle": "",
+    "cards": {
+      "symptom": {
+        "title": "Symptom Checker",
+        "description": "Use clinically-validated tests like PHQ-9 and GAD-7 to understand your mental state."
+      },
+      "mood": {
+        "title": "Track Your Mood",
+        "description": "Log your mood daily to recognize patterns and see your progress over time."
+      },
+      "resources": {
+        "title": "AI-Powered Resources",
+        "description": "Get personalized recommendations for exercises, music, and journaling prompts."
+      },
+      "community": {
+        "title": "Community Support",
+        "description": "Connect with peers in a safe, anonymous forum to share experiences."
+      },
+      "appointments": {
+        "title": "Appointments",
+        "description": "Book confidential sessions with professional counselors at your convenience."
+      },
+      "breathing": {
+        "title": "Breathing",
+        "description": "Access a library of breathing exercises and relaxation techniques to find calm."
+      },
+      "groove": {
+        "title": "Mood Groove",
+        "description": "Use your camera to get instant feedback on your current emotional state."
+      },
+      "music": {
+        "title": "Music Therapy",
+        "description": "Receive AI-curated Indian music playlists based on your self-assessment scores."
+      }
+    }
+  },
+  "testimonials": {
+    "title": "What Our Users Say",
+    "subtitle": "Real stories from students who found support and hope through MindCare.",
+    "cards": {
+      "1": {
+        "quote": "The anonymous forum is a lifesaver. It feels so good to know I'm not the only one going through this. Meeting other people on this platform gave me the courage to share my own.",
+        "author": "Anonymous Student"
+      },
+      "2": {
+        "quote": "I was hesitant to try the AI chat, but it was surprisingly helpful. It gave me some great coping strategies that I needed them. It's like having a supportive friend available 24/7.",
+        "author": "Anonymous Student"
+      },
+      "3": {
+        "quote": "Booking a session with a counselor was so easy and completely confidential. I was worried about the stigma, but this platform made taking the first step towards getting professional help feel safe.",
+        "author": "Anonymous Student"
+      }
+    }
+  },
+  "crisisHelp": {
+    "title": "In Crisis? Help is Available.",
+    "description": "If you are in immediate distress, please don't hesitate to reach out. Our crisis helplines provide confidential, free support 24/7.",
+    "button": "Find Help Now"
+  },
+  "footer": {
+    "about": {
+      "title": "About Us",
+      "mission": "Our Mission",
+      "team": "Team",
+      "contact": "Contact Us"
+    },
+    "resources": {
+      "title": "Resources",
+      "blog": "Blog",
+      "guides": "Self-Help Guides",
+      "faq": "FAQ"
+    },
+    "legal": {
+      "title": "Legal",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "cookies": "Cookie Policy"
+    },
+    "emergency": {
+      "title": "Emergency",
+      "helplines": "Crisis Helplines",
+      "resources": "Emergency Resources",
+      "helplineText": "24/7 Helpline: 14416"
+    },
+    "copyright": "© {{year}} MindCare. All rights reserved.",
+    "disclaimer": "Disclaimer: This platform is for support and not a substitute for professional medical advice. In a crisis, please contact a helpline."
+  },
+  "dashboard": {
+    "resultsTitle": "Mood Analysis Result",
+    "dominantMood": "Dominant Mood",
+    "confidence": "Confidence",
+    "depression": "Depression Signs",
+    "anxiety": "Anxiety Signs",
+    "dismiss": "Dismiss"
+  }
+}

@@ -1,6 +1,6 @@
-'use server';
+// Client-side API functions (converted from Server Actions for static export)
 
-import { revalidatePath } from 'next/cache';
+// Note: revalidatePath is not available in static export, removed
 import { ForumPost, Feedback } from '@/types/index';
 
 const API_BASE_URL = 'http://127.0.0.1:5001/api';
@@ -20,7 +20,7 @@ export async function createForumPost(formData: { title: string; content: string
       throw new Error('Failed to create forum post');
     }
 
-    revalidatePath('/forum');
+    // revalidatePath not available in static export
     return { success: true };
   } catch (error) {
     console.error("Error creating forum post:", error);
