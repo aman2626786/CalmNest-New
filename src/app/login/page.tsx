@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { isDemoMode } from '@/utils/demoAuth';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,33 +22,18 @@ export default function LoginPage() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        try {
-          // Try to fetch profile from Flask backend
-          const response = await fetch(`http://127.0.0.1:5001/api/profile/${session.user.id}`);
-          
-          if (response.ok) {
-            const profile = await response.json();
-            
-            if (!profile.full_name || !profile.age) {
-              router.push('/profile-setup');
-            } else {
-              router.push('/dashboard');
-            }
-          } else if (response.status === 404) {
-            // No profile found, redirect to setup
-            router.push('/profile-setup');
-          } else {
-            console.error('Error fetching profile:', response.status);
-            // Continue to dashboard even if profile fetch fails
+        // Only redirect if user is confirmed (not just signed up)
+        if (session.user.email_confirmed_at) {
+          setMessage('Successfully signed in! Redirecting...');
+          setTimeout(() => {
             router.push('/dashboard');
-          }
-        } catch (error) {
-          console.error('Error fetching profile:', error);
-          // Continue to dashboard even if profile fetch fails
-          router.push('/dashboard');
+          }, 1000);
+        } else {
+          setMessage('Please check your email and confirm your account before signing in.');
         }
       } else if (event === 'SIGNED_OUT') {
-        router.push('/login');
+        // Don't automatically redirect on sign out from login page
+        setMessage('');
       }
     });
 
@@ -62,21 +46,9 @@ export default function LoginPage() {
     e.preventDefault();
     setMessage('');
     
-    if (isDemoMode()) {
-      // Mock signup for demo purposes
-      setMessage('Demo mode: Account created successfully! Redirecting to dashboard...');
-      setTimeout(() => {
-        // Store demo user data in localStorage
-        const demoUser = {
-          id: 'demo-user-' + Date.now(),
-          email: email,
-          full_name: fullName,
-          age: parseInt(age, 10),
-          gender: gender,
-        };
-        localStorage.setItem('demo_user', JSON.stringify(demoUser));
-        router.push('/dashboard');
-      }, 2000);
+    // Validate required fields
+    if (!email || !password || !fullName || !age || !gender) {
+      setMessage('Please fill in all required fields.');
       return;
     }
 
@@ -96,25 +68,19 @@ export default function LoginPage() {
       if (error) {
         setMessage(`Error signing up: ${error.message}`);
       } else {
-        setMessage('Sign up successful! Please check your email to confirm.');
-        if (data.user) {
-          console.log('User created, profile will be handled by trigger or next step.');
-        }
+        setMessage('Sign up successful! Please check your email to confirm your account.');
+        // Clear form
+        setEmail('');
+        setPassword('');
+        setFullName('');
+        setAge('');
+        setGender('');
+        // Switch to sign in mode
+        setIsSignUp(false);
       }
     } catch (error) {
       console.error('Signup error:', error);
-      setMessage('Error signing up: Failed to fetch. Using demo mode instead...');
-      setTimeout(() => {
-        const demoUser = {
-          id: 'demo-user-' + Date.now(),
-          email: email,
-          full_name: fullName,
-          age: parseInt(age, 10),
-          gender: gender,
-        };
-        localStorage.setItem('demo_user', JSON.stringify(demoUser));
-        router.push('/dashboard');
-      }, 2000);
+      setMessage('Error signing up: Please check your internet connection and try again.');
     }
   };
 
@@ -122,21 +88,9 @@ export default function LoginPage() {
     e.preventDefault();
     setMessage('');
     
-    if (isDemoMode()) {
-      // Mock signin for demo purposes
-      setMessage('Demo mode: Signing in...');
-      setTimeout(() => {
-        // Create a demo user session
-        const demoUser = {
-          id: 'demo-user-signin',
-          email: email,
-          full_name: 'Demo User',
-          age: 25,
-          gender: 'prefer-not-to-say',
-        };
-        localStorage.setItem('demo_user', JSON.stringify(demoUser));
-        router.push('/dashboard');
-      }, 1500);
+    // Validate required fields
+    if (!email || !password) {
+      setMessage('Please enter both email and password.');
       return;
     }
 
@@ -145,25 +99,16 @@ export default function LoginPage() {
         email,
         password,
       });
+      
       if (error) {
         setMessage(`Error signing in: ${error.message}`);
       } else {
-          // The onAuthStateChange listener will handle the redirect
+        setMessage('Signing in...');
+        // The onAuthStateChange listener will handle the redirect
       }
     } catch (error) {
       console.error('Signin error:', error);
-      setMessage('Error signing in: Failed to fetch. Using demo mode instead...');
-      setTimeout(() => {
-        const demoUser = {
-          id: 'demo-user-signin',
-          email: email,
-          full_name: 'Demo User',
-          age: 25,
-          gender: 'prefer-not-to-say',
-        };
-        localStorage.setItem('demo_user', JSON.stringify(demoUser));
-        router.push('/dashboard');
-      }, 1500);
+      setMessage('Error signing in: Please check your internet connection and try again.');
     }
   };
 
@@ -243,6 +188,14 @@ export default function LoginPage() {
                 <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">{isSignUp ? 'Sign Up' : 'Sign In'}</Button>
                 <Button onClick={() => setIsSignUp(!isSignUp)} variant="link" type="button" className="w-full text-purple-400 hover:text-purple-300">
                   {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+                </Button>
+                <Button 
+                  onClick={() => router.push('/')} 
+                  variant="outline" 
+                  type="button" 
+                  className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  Continue as Guest
                 </Button>
             </div>
           </form>
