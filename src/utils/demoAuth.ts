@@ -1,9 +1,20 @@
 // Demo authentication utilities
 export const isDemoMode = () => {
-  const isDummyConfig = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('dummy-project') || 
-                       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-                       process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://dummy-project.supabase.co';
-  return isDummyConfig;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  // Check if we have placeholder/invalid credentials
+  const hasPlaceholderUrl = !supabaseUrl || 
+                           supabaseUrl.includes('your-project-ref') || 
+                           supabaseUrl.includes('placeholder') ||
+                           supabaseUrl === 'https://dummy-project.supabase.co';
+                           
+  const hasPlaceholderKey = !supabaseKey || 
+                           supabaseKey.includes('your-anon-key') || 
+                           supabaseKey.includes('placeholder') ||
+                           supabaseKey.includes('dummy-key');
+  
+  return hasPlaceholderUrl || hasPlaceholderKey;
 };
 
 export const getDemoUser = () => {
