@@ -21,6 +21,11 @@ declare global {
   }
 }
 
+export const metadata = {
+  title: 'CalmNest - Your Mental Wellness Journey',
+  description: 'A Safe Digital Space for Students to Prioritize their Mental Well-being.',
+};
+
 export default function RootLayout({
   children,
 }: {
