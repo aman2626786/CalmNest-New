@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
+import { localAuth } from '@/lib/localAuth';
 
 interface UserProfile {
   id: string;
@@ -28,7 +29,23 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
   const supabase = useSupabaseClient();
 
   const fetchProfile = async () => {
-    // Check for demo user first
+    // Check for local auth user first
+    const localUser = localAuth.getCurrentUser();
+    if (localUser && !session?.user?.id) {
+      const userProfile: UserProfile = {
+        id: localUser.id,
+        email: localUser.email,
+        full_name: localUser.full_name,
+        age: localUser.age,
+        gender: localUser.gender,
+      };
+      setProfile(userProfile);
+      setLoading(false);
+      console.log('Using local auth profile:', userProfile);
+      return;
+    }
+
+    // Check for demo user (legacy support)
     const demoUser = localStorage.getItem('demo_user');
     if (demoUser && !session?.user?.id) {
       try {
@@ -197,16 +214,18 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
       console.log('UserProfileContext: Session detected, fetching profile for:', session.user.id);
       fetchProfile();
     } else {
-      // Check for demo user when no session
+      // Check for local auth user or demo user when no session
+      const localUser = localAuth.getCurrentUser();
       const demoUser = localStorage.getItem('demo_user');
-      if (demoUser) {
-        console.log('UserProfileContext: No session but demo user found, fetching demo profile');
+      
+      if (localUser || demoUser) {
+        console.log('UserProfileContext: No session but local/demo user found, fetching profile');
         fetchProfile();
       } else {
-        console.log('UserProfileContext: No session and no demo user, clearing profile data');
+        console.log('UserProfileContext: No session and no local/demo user, clearing profile data');
         setProfile(null);
         setLoading(false);
-        // Clear localStorage when no session and no demo user
+        // Clear localStorage when no session and no local user
         localStorage.removeItem('userProfile');
         localStorage.removeItem('userName');
         localStorage.removeItem('userEmail');

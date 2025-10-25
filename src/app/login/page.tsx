@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { localAuth, autoConfirmEmail } from '@/lib/localAuth';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,39 @@ export default function LoginPage() {
     }
 
     try {
+      // Check if we should use local auth
+      if (localAuth.isLocalAuth()) {
+        console.log('Using local authentication for development');
+        
+        const result = await localAuth.signUp(email, password, {
+          full_name: fullName,
+          age: parseInt(age, 10),
+          gender: gender,
+        });
+        
+        setMessage('Account created successfully! Email confirmation simulated for development.');
+        
+        // Auto-confirm email for development
+        autoConfirmEmail(email);
+        
+        // Clear form
+        setEmail('');
+        setPassword('');
+        setFullName('');
+        setAge('');
+        setGender('');
+        // Switch to sign in mode
+        setIsSignUp(false);
+        
+        // Show additional message
+        setTimeout(() => {
+          setMessage('Email confirmed! You can now sign in with your credentials.');
+        }, 3000);
+        
+        return;
+      }
+
+      // Use real Supabase if configured
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -78,9 +112,9 @@ export default function LoginPage() {
         // Switch to sign in mode
         setIsSignUp(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
-      setMessage('Error signing up: Please check your internet connection and try again.');
+      setMessage(`Error signing up: ${error.message || 'Please try again.'}`);
     }
   };
 
@@ -95,6 +129,26 @@ export default function LoginPage() {
     }
 
     try {
+      // Check if we should use local auth
+      if (localAuth.isLocalAuth()) {
+        console.log('Using local authentication for development');
+        
+        const result = await localAuth.signIn(email, password);
+        setMessage('Successfully signed in! Redirecting to dashboard...');
+        
+        // Clear form
+        setEmail('');
+        setPassword('');
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1000);
+        
+        return;
+      }
+
+      // Use real Supabase if configured
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -106,9 +160,9 @@ export default function LoginPage() {
         setMessage('Signing in...');
         // The onAuthStateChange listener will handle the redirect
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signin error:', error);
-      setMessage('Error signing in: Please check your internet connection and try again.');
+      setMessage(`Error signing in: ${error.message || 'Please check your credentials and try again.'}`);
     }
   };
 
