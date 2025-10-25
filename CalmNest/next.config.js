@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  trailingSlash: true,
+  output: 'export',
+  distDir: 'out',
   webpack: (config) => {
     config.resolve.fallback = { fs: false, net: false, tls: false };
     return config;
@@ -15,6 +18,7 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+    unoptimized: true,
   },
 }
 

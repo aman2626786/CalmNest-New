@@ -1,23 +1,10 @@
 [build]
-  publish = ".next"
   command = "npm run build"
+  publish = "out"
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_VERSION = "9"
 
-# Essential plugin for Next.js on Netlify
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-# Handle client-side routing
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  conditions = {Role = ["admin"], Country = ["US"]}
-
-# Fallback for all routes to support Next.js routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
