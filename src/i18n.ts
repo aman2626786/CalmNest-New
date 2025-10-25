@@ -18,19 +18,43 @@ const baseConfig = {
 const isServer = typeof window === 'undefined';
 
 if (isServer) {
-  // Server-side: disable i18next backend loading during build
-  // We'll handle translations differently for static generation
+  // Server-side: Load translations synchronously for static generation
+  let resources: any = { en: {}, hi: {} };
+  
+  try {
+    // Try to load translation files synchronously during build
+    const fs = require('fs');
+    const path = require('path');
+    
+    const localesPath = path.join(process.cwd(), 'public', 'locales');
+    const languages = ['en', 'hi'];
+    const namespaces = baseConfig.ns;
+    
+    languages.forEach(lang => {
+      resources[lang] = {};
+      namespaces.forEach(ns => {
+        try {
+          const filePath = path.join(localesPath, lang, `${ns}.json`);
+          if (fs.existsSync(filePath)) {
+            const content = fs.readFileSync(filePath, 'utf8');
+            resources[lang][ns] = JSON.parse(content);
+          }
+        } catch (error) {
+          console.warn(`Failed to load ${lang}/${ns}.json:`, error.message);
+        }
+      });
+    });
+  } catch (error) {
+    console.warn('Failed to load translation files during build:', error.message);
+  }
+
   i18n
     .use(initReactI18next)
     .init({
       ...baseConfig,
       debug: false,
       initImmediate: false,
-      // Provide empty resources to prevent loading attempts
-      resources: {
-        en: {},
-        hi: {},
-      },
+      resources,
     });
 } else {
   // Client-side: use HTTP backend

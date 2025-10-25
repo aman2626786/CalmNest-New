@@ -30,7 +30,7 @@ export const Hero = () => {
         <div className="absolute bottom-40 left-20 w-24 h-24 bg-pink-500/20 rounded-full blur-xl animate-pulse delay-2000"></div>
       </div>
 
-      {/* Loading State */}
+      {/* Loading State - Only show on client when translations aren't ready */}
       {isClient && !isReady && (
         <div className="container-custom relative z-10 px-4">
           <div className="text-center max-w-6xl mx-auto pt-20">
@@ -44,8 +44,8 @@ export const Hero = () => {
         </div>
       )}
 
-      {/* Content - Render only on the client */}
-      {isClient && isReady && (
+      {/* Content - Render during SSG and when ready on client */}
+      {(!isClient || isReady) && (
         <div className="container-custom relative z-10 px-4">
           <div className="text-center max-w-6xl mx-auto pt-20">
             {/* Badge */}
