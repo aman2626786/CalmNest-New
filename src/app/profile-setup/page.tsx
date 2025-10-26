@@ -28,9 +28,17 @@ export default function ProfileSetupPage() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        setMessage('You must be logged in to set up a profile.');
-        router.push('/login');
-        return;
+        // Check for user in AuthContext as fallback
+        const userEmail = localStorage.getItem('userEmail');
+        const userId = localStorage.getItem('userId');
+        
+        if (!userEmail || !userId) {
+          setMessage('You must be logged in to set up a profile.');
+          router.push('/login');
+          return;
+        }
+        
+        console.log('Using fallback user data for profile setup');
       }
 
       // Store user info in localStorage for consistent access

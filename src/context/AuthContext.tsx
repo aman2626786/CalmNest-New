@@ -209,6 +209,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('User confirmation status:', data.user?.email_confirmed_at);
         console.log('Session:', data.session);
         
+        // If user is created but not confirmed, set user state anyway for immediate access
+        if (data.user && !data.session) {
+          console.log('User created but not confirmed, setting user state for immediate access');
+          setUser(data.user);
+          setSession(null);
+        }
+        
         return { error: null };
       } else {
         // Use local auth fallback
