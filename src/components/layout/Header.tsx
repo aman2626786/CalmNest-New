@@ -10,9 +10,10 @@ import { FeedbackButton } from '@/components/features/feedback/FeedbackButton';
 import { ProfileButton } from '@/components/layout/ProfileButton';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
+import { DownloadReportButton } from '@/components/layout/DownloadReportButton';
 
 export const Header = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('common');
   const [isClient, setIsClient] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -28,17 +29,15 @@ export const Header = () => {
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-4 text-sm">
-            <Link href="/dashboard" className={`${pathname.startsWith('/dashboard') ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors`}>
-              {t('nav.dashboard')}
-            </Link>
             <Link href="/self-check" className={`${pathname.startsWith('/self-check') ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors`}>
               {t('nav.selfCheck')}
             </Link>
-            <Link href="/appointments" className={`${pathname.startsWith('/appointments') ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors`}>
-              {t('nav.appointments')}
-            </Link>
+
             <Link href="/resources" className={`${pathname.startsWith('/resources') ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors`}>
               {t('nav.resources')}
+            </Link>
+            <Link href="/dashboard" className={`${pathname.startsWith('/dashboard') ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors`}>
+              {t('nav.dashboard')}
             </Link>
             <Link href="/forum" className={`${pathname.startsWith('/forum') ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors`}>
               {t('nav.forum')}
@@ -84,32 +83,26 @@ export const Header = () => {
           <div className="container-custom py-4 space-y-4">
             <div className="flex flex-col space-y-3">
               <Link 
-                href="/dashboard" 
-                className={`${pathname.startsWith('/dashboard') ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors py-2`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {t('nav.dashboard')}
-              </Link>
-              <Link 
                 href="/self-check" 
                 className={`${pathname.startsWith('/self-check') ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors py-2`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t('nav.selfCheck')}
               </Link>
-              <Link 
-                href="/appointments" 
-                className={`${pathname.startsWith('/appointments') ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors py-2`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {t('nav.appointments')}
-              </Link>
+
               <Link 
                 href="/resources" 
                 className={`${pathname.startsWith('/resources') ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors py-2`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t('nav.resources')}
+              </Link>
+              <Link 
+                href="/dashboard" 
+                className={`${pathname.startsWith('/dashboard') ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors py-2`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {t('nav.dashboard')}
               </Link>
               <Link 
                 href="/forum" 

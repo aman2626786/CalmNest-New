@@ -26,14 +26,7 @@ export const Features = () => {
       color: 'from-purple-500 to-indigo-500',
       badge: 'Assessment'
     },
-    {
-      icon: <IconCalendar className="w-8 h-8 text-blue-400" />,
-      title: t('features.cards.appointments.title'),
-      description: t('features.cards.appointments.description'),
-      link: '/appointments',
-      color: 'from-blue-500 to-cyan-500',
-      badge: 'Scheduling'
-    },
+
     {
       icon: <IconBrain className="w-8 h-8 text-green-400" />,
       title: t('features.cards.resources.title'),
@@ -167,8 +160,8 @@ export const Features = () => {
             Ready to start your wellness journey?
           </p>
           <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              Go to Dashboard
+            <Link href="/comprehensive-assessment" className="flex items-center gap-2">
+              Start Assessment
               <ArrowRight className="w-5 h-5" />
             </Link>
           </Button>

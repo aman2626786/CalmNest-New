@@ -32,7 +32,7 @@ const feedbackSchema = z.object({
   }),
 });
 
-const features = ['AI Chat', 'Forum', 'Resources', 'Appointments', 'Other'];
+const features = ['AI Chat', 'Forum', 'Resources', 'Other'];
 type FeedbackFormValues = z.infer<typeof feedbackSchema>;
 
 export function FeedbackForm({ setOpen }: { setOpen: (open: boolean) => void }) {

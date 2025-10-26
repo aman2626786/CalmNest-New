@@ -100,7 +100,7 @@ const translations = {
 const baseConfig = {
   supportedLngs: ['en', 'hi'],
   fallbackLng: 'en',
-  ns: ['common', 'translation', 'phq9', 'gad7', 'suggestions', 'dashboard', 'appointments', 'resources', 'exercises', 'forum'],
+  ns: ['common', 'translation', 'phq9', 'gad7', 'suggestions', 'appointments', 'resources', 'exercises', 'forum', 'dashboard'],
   defaultNS: 'common',
   interpolation: {
     escapeValue: false,
@@ -119,6 +119,35 @@ i18n
       order: ['cookie', 'localStorage', 'navigator', 'htmlTag'],
       caches: ['cookie', 'localStorage'],
     },
+    // Add backend configuration for loading translation files
+    backend: {
+      loadPath: '/locales/{{lng}}/{{ns}}.json',
+    },
   });
+
+// Load additional namespaces dynamically
+const loadNamespace = async (lng: string, ns: string) => {
+  try {
+    const response = await fetch(`/locales/${lng}/${ns}.json`);
+    if (response.ok) {
+      const translations = await response.json();
+      i18n.addResourceBundle(lng, ns, translations, true, true);
+    }
+  } catch (error) {
+    console.warn(`Failed to load ${ns} translations for ${lng}:`, error);
+  }
+};
+
+// Pre-load common, PHQ9, GAD7, and Dashboard translations
+if (typeof window !== 'undefined') {
+  loadNamespace('en', 'common');
+  loadNamespace('en', 'phq9');
+  loadNamespace('en', 'gad7');
+  loadNamespace('en', 'dashboard');
+  loadNamespace('hi', 'common');
+  loadNamespace('hi', 'phq9');
+  loadNamespace('hi', 'gad7');
+  loadNamespace('hi', 'dashboard');
+}
 
 export default i18n;

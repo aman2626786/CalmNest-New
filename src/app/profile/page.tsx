@@ -190,11 +190,11 @@ export default function ProfilePage() {
                 </Button>
                 
                 <Button 
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => router.push('/profile-setup')}
                   variant="outline"
                   className="border-gray-600 text-gray-300 hover:bg-gray-700"
                 >
-                  Go to Dashboard
+                  Edit Profile
                 </Button>
                 
                 <Button 

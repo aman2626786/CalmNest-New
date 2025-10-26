@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from '@/context/AuthContext'; // Use the central AuthContext
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -18,15 +18,35 @@ export default function LoginPage() {
   });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'error' | 'success' | 'info'>('info');
-  const [isSignUp, setIsSignUp] = useState(true);
+  const [isSignUp, setIsSignUp] = useState(false);
   const router = useRouter();
   
   const { user, loading, signUp, signIn } = useAuth();
 
-  // Redirect if user is already logged in
+  // Handle redirects and URL parameters
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const error = searchParams.get('error');
+    const redirectTo = searchParams.get('redirectTo');
+    
+    if (error) {
+      setMessage(decodeURIComponent(error));
+      setMessageType('error');
+    }
+    
+    // Redirect if user is already logged in
     if (!loading && user) {
-      router.push('/');
+      const timer = setTimeout(() => {
+        if (redirectTo) {
+          console.log('Login: Redirecting to:', redirectTo);
+          router.push(decodeURIComponent(redirectTo));
+        } else {
+          console.log('Login: No redirectTo, going to profile-setup');
+          router.push('/profile-setup');
+        }
+      }, 1000); // Give a short delay to show the message
+
+      return () => clearTimeout(timer);
     }
   }, [user, loading, router]);
 
@@ -35,7 +55,7 @@ export default function LoginPage() {
     e.preventDefault();
     setMessage('');
 
-    if (!formData.email || !formData.password || (isSignUp && (!formData.fullName || !formData.age || !formData.gender))) {
+    if (!formData.email || !formData.password || !formData.fullName || !formData.age || !formData.gender) {
       setMessage('Please fill in all required fields.');
       setMessageType('error');
       return;
@@ -52,7 +72,7 @@ export default function LoginPage() {
       setMessageType('error');
     } else {
       setMessageType('success');
-      setMessage('Sign up successful! Please check your email to confirm.');
+      setMessage('Account created! Please check your email to confirm your registration.');
     }
   };
 
@@ -75,28 +95,39 @@ export default function LoginPage() {
     } else {
       setMessageType('success');
       setMessage('Sign in successful! Redirecting...');
+      setTimeout(() => router.push('/'), 500);
     }
   };
   
-  if (loading || user) {
+  if (loading) {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-900">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
+      </div>
+    );
+  }
+
+  if (user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+        <div className="text-white text-center">
+          <p>Already logged in. Redirecting...</p>
         </div>
+      </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900">
+    <div className="flex items-center justify-center min-h-screen bg-gray-900 px-4">
       <Card className="w-full max-w-md bg-gray-800 border-gray-700 text-white">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">
             {isSignUp ? 'Create Your Account' : 'Welcome Back'}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-400">
             {isSignUp 
               ? 'Fill in your details to create your CalmNest account' 
-              : 'Enter your email to sign in to your account'
+              : 'Enter your credentials to sign in to your account'
             }
           </CardDescription>
         </CardHeader>
@@ -133,7 +164,7 @@ export default function LoginPage() {
                     id="gender"
                     value={formData.gender}
                     onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
-                    className="w-full p-2 bg-gray-700 border-gray-600 text-white rounded-md"
+                    className="w-full p-2 bg-gray-700 border border-gray-600 text-white rounded-md"
                     required
                   >
                     <option value="" disabled>Select your gender</option>
@@ -216,7 +247,7 @@ export default function LoginPage() {
                 type="button" 
                 className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
               >
-                Continue as Guest
+                Back to Home
               </Button>
             </div>
           </form>

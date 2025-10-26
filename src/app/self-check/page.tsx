@@ -69,7 +69,7 @@ export default function SelfCheckPage() {
           },
           {
             question: "Are my results confidential?",
-            answer: "Yes, your assessment results are completely confidential and stored securely. Only you can access your results through your personal dashboard."
+            answer: "Yes, your assessment results are completely confidential and stored securely. Only you can access your results through your personal profile."
           },
           {
             question: "Should I take both assessments?",

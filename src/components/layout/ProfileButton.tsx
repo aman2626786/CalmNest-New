@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -19,12 +19,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, LogOut, Trash2, Sun, Moon, Laptop, Edit } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext'; // Use the central auth context
+import { useAuth } from '@/context/AuthContext';
 
 export function ProfileButton() {
   const { setTheme } = useTheme();
   const router = useRouter();
-  const { user, signOut, loading } = useAuth(); // Get user and signOut from context
+  const { user, signOut, loading } = useAuth();
 
   const handleSignOut = async () => {
     console.log('🔄 Signing out user...');
@@ -47,7 +47,7 @@ export function ProfileButton() {
           console.log('✅ Account deleted from backend');
         }
         
-        // Sign out from context
+        // Sign out from auth context
         await signOut();
         alert('Account deleted successfully.');
         router.push('/');

@@ -1,15 +1,17 @@
+import os
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime
 from flask_cors import CORS
 from sqlalchemy import func
 from database import db
 from models import TestSubmission, MoodGrooveResult, ChatLog, BreathingExerciseLog, ForumPost, Feedback, UserInteraction, FacialAnalysisSession, ComprehensiveAssessment, AssessmentSession, Profile
+from utils import safe_isoformat, safe_getattr, create_error_response, log_error
 
 app = Flask(__name__)
 
 # CORS Configuration for production
 import os
-allowed_origins = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
+allowed_origins = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:3001').split(',')
 CORS(app, origins=allowed_origins)
 
 # Database Configuration
@@ -165,7 +167,7 @@ def forum():
                 'content': post.content,
                 'author': post.author,
                 'category': getattr(post, 'category', 'General'),  # Handle missing category gracefully
-                'timestamp': post.timestamp.isoformat(),
+                'timestamp': safe_isoformat(post.timestamp),
                 'replyCount': 0  # Placeholder for reply count
             } for post in posts])
         except Exception as e:
@@ -209,7 +211,7 @@ def get_featured_feedback():
         'user_name': getattr(f, 'user_name', 'Anonymous'),
         'feedback_text': f.feedback_text,
         'rating': f.rating,
-        'timestamp': f.timestamp.isoformat()
+        'timestamp': safe_isoformat(f.timestamp)
     } for f in feedbacks])
 
 @app.route('/api/interactions', methods=['POST'])
@@ -259,7 +261,7 @@ def get_mood_groove_history(user_id):
             'depression': result.depression,
             'anxiety': result.anxiety,
             'expressions': result.expressions,
-            'created_at': result.timestamp.isoformat()
+            'created_at': safe_isoformat(result.timestamp)
         } for result in results])
     except Exception as e:
         print(f"Error fetching mood groove history: {e}")
@@ -317,131 +319,211 @@ def get_mood_groove_by_email(user_email):
         'depression': res.depression,
         'anxiety': res.anxiety,
         'expressions': res.expressions,
-        'timestamp': res.timestamp.isoformat()
+        'timestamp': safe_isoformat(res.timestamp)
     } for res in mood_groove_results])
 
 @app.route('/api/dashboard/unified/<user_id>/<user_email>')
 def unified_dashboard(user_id, user_email):
     """Unified dashboard endpoint that fetches all user data by both ID and email"""
+    test_submissions = []
+    all_mood_results = {}
+    breathing_logs = []
+    facial_sessions = []
+    comprehensive_assessments = []
+    user_profile = None
+    
     try:
         print(f"Unified Dashboard: Fetching data for user_id={user_id}, user_email={user_email}")
         
         # Fetch test submissions by user_id
-        test_submissions = TestSubmission.query.filter_by(user_id=user_id).all()
-        print(f"Found {len(test_submissions)} test submissions")
+        try:
+            test_submissions = TestSubmission.query.filter_by(user_id=user_id).all()
+            print(f"Found {len(test_submissions)} test submissions")
+        except Exception as e:
+            print(f"Error fetching test submissions: {e}")
+            log_error('/api/dashboard/unified', e, user_id, {'section': 'test_submissions'})
         
         # Fetch mood groove results by user_id (safer approach)
-        mood_groove_results_by_id = MoodGrooveResult.query.filter_by(user_id=user_id).all()
-        print(f"Found {len(mood_groove_results_by_id)} mood groove results by ID")
-        
-        # Try to fetch by email if column exists, otherwise skip
-        mood_groove_results_by_email = []
         try:
-            mood_groove_results_by_email = MoodGrooveResult.query.filter_by(user_email=user_email).all()
-            print(f"Found {len(mood_groove_results_by_email)} mood groove results by email")
+            mood_groove_results_by_id = MoodGrooveResult.query.filter_by(user_id=user_id).all()
+            print(f"Found {len(mood_groove_results_by_id)} mood groove results by ID")
+            
+            # Try to fetch by email if column exists, otherwise skip
+            mood_groove_results_by_email = []
+            try:
+                mood_groove_results_by_email = MoodGrooveResult.query.filter_by(user_email=user_email).all()
+                print(f"Found {len(mood_groove_results_by_email)} mood groove results by email")
+            except Exception as e:
+                print(f"Warning: Could not fetch mood groove by email (column may not exist): {e}")
+            
+            # Combine and deduplicate mood groove results
+            for result in mood_groove_results_by_id + mood_groove_results_by_email:
+                all_mood_results[result.id] = result
         except Exception as e:
-            print(f"Warning: Could not fetch mood groove by email (column may not exist): {e}")
-        
-        # Combine and deduplicate mood groove results
-        all_mood_results = {}
-        for result in mood_groove_results_by_id + mood_groove_results_by_email:
-            all_mood_results[result.id] = result
+            print(f"Error fetching mood groove results: {e}")
+            log_error('/api/dashboard/unified', e, user_id, {'section': 'mood_groove_results'})
         
         # Fetch breathing exercises by user_id
-        breathing_logs = BreathingExerciseLog.query.filter_by(user_id=user_id).all()
-        print(f"Found {len(breathing_logs)} breathing exercises")
+        try:
+            breathing_logs = BreathingExerciseLog.query.filter_by(user_id=user_id).all()
+            print(f"Found {len(breathing_logs)} breathing exercises")
+        except Exception as e:
+            print(f"Error fetching breathing exercises: {e}")
+            log_error('/api/dashboard/unified', e, user_id, {'section': 'breathing_exercises'})
         
         # Fetch facial analysis by user_email
-        facial_sessions = FacialAnalysisSession.query.filter_by(user_email=user_email).all()
-        print(f"Found {len(facial_sessions)} facial analysis sessions")
+        try:
+            facial_sessions = FacialAnalysisSession.query.filter_by(user_email=user_email).all()
+            print(f"Found {len(facial_sessions)} facial analysis sessions")
+        except Exception as e:
+            print(f"Error fetching facial analysis sessions: {e}")
+            log_error('/api/dashboard/unified', e, user_id, {'section': 'facial_analysis'})
         
         # Fetch comprehensive assessments by user_id
-        comprehensive_assessments = ComprehensiveAssessment.query.filter_by(user_id=user_id).all()
-        print(f"Found {len(comprehensive_assessments)} comprehensive assessments")
+        try:
+            comprehensive_assessments = ComprehensiveAssessment.query.filter_by(user_id=user_id).all()
+            print(f"Found {len(comprehensive_assessments)} comprehensive assessments")
+        except Exception as e:
+            print(f"Error fetching comprehensive assessments: {e}")
+            log_error('/api/dashboard/unified', e, user_id, {'section': 'comprehensive_assessments'})
         
         # Fetch user profile
-        user_profile = Profile.query.filter_by(id=user_id).first()
-        print(f"Found profile: {user_profile.full_name if user_profile else 'None'}")
+        try:
+            user_profile = Profile.query.filter_by(id=user_id).first()
+            print(f"Found profile: {user_profile.full_name if user_profile else 'None'}")
+        except Exception as e:
+            print(f"Error fetching user profile: {e}")
+            log_error('/api/dashboard/unified', e, user_id, {'section': 'user_profile'})
 
-        return jsonify({
-            'test_submissions': [{
-                'id': sub.id,
-                'user_id': sub.user_id,
-                'test_type': sub.test_type,
-                'score': sub.score,
-                'severity': sub.severity,
-                'answers': sub.answers,
-                'timestamp': sub.timestamp.isoformat()
-            } for sub in test_submissions],
-            'mood_groove_results': [{
-                'id': res.id,
-                'user_id': res.user_id,
-                'user_email': res.user_email,
-                'dominant_mood': res.dominant_mood,
-                'confidence': res.confidence,
-                'depression': res.depression,
-                'anxiety': res.anxiety,
-                'expressions': res.expressions,
-                'timestamp': res.timestamp.isoformat()
-            } for res in all_mood_results.values()],
-            'breathing_exercises': [{
-                'id': log.id,
-                'user_id': log.user_id,
-                'exercise_name': log.exercise_name,
-                'duration_seconds': log.duration_seconds,
-                'timestamp': log.timestamp.isoformat()
-            } for log in breathing_logs],
-            'facial_analysis_sessions': [{
-                'id': session.id,
-                'user_email': session.user_email,
-                'session_start_time': session.session_start_time.isoformat(),
-                'session_end_time': session.session_end_time.isoformat(),
-                'total_detections': session.total_detections,
-                'dominant_mood': session.dominant_mood,
-                'avg_confidence': session.avg_confidence,
-                'avg_depression': session.avg_depression,
-                'avg_anxiety': session.avg_anxiety,
-                'mood_distribution': session.mood_distribution,
-                'raw_data': session.raw_data,
-                'timestamp': session.timestamp.isoformat()
-            } for session in facial_sessions],
-            'comprehensive_assessments': [{
-                'id': assessment.id,
-                'session_id': assessment.session_id,
-                'status': assessment.status,
-                'started_at': assessment.started_at.isoformat(),
-                'completed_at': assessment.completed_at.isoformat() if assessment.completed_at else None,
-                'phq9_score': assessment.phq9_score,
-                'phq9_severity': assessment.phq9_severity,
-                'gad7_score': assessment.gad7_score,
-                'gad7_severity': assessment.gad7_severity,
-                'mood_groove_dominant_mood': assessment.mood_groove_dominant_mood,
-                'mood_groove_confidence': assessment.mood_groove_confidence,
-                'mood_groove_depression': assessment.mood_groove_depression,
-                'mood_groove_anxiety': assessment.mood_groove_anxiety,
-                'resilience_score': assessment.resilience_score,
-                'stress_score': assessment.stress_score,
-                'sleep_quality_score': assessment.sleep_quality_score,
-                'social_support_score': assessment.social_support_score,
-                'overall_severity': assessment.overall_severity,
-                'risk_level': assessment.risk_level,
-                'analysis_prompt': assessment.analysis_prompt,
-                'timestamp': assessment.timestamp.isoformat()
-            } for assessment in comprehensive_assessments],
+        # Build response with safe data processing
+        response_data = {
             'test_count': len(test_submissions),
             'total_sessions': len(facial_sessions),
             'comprehensive_assessments_count': len(comprehensive_assessments),
-            'user_profile': {
-                'id': user_profile.id,
-                'email': user_profile.email,
-                'full_name': user_profile.full_name,
-                'age': user_profile.age,
-                'gender': user_profile.gender,
-                'updated_at': user_profile.updated_at.isoformat()
-            } if user_profile else None
-        })
+            'user_profile': None
+        }
+        
+        # Process test submissions safely
+        try:
+            response_data['test_submissions'] = [{
+                'id': safe_getattr(sub, 'id'),
+                'user_id': safe_getattr(sub, 'user_id'),
+                'test_type': safe_getattr(sub, 'test_type'),
+                'score': safe_getattr(sub, 'score'),
+                'severity': safe_getattr(sub, 'severity'),
+                'answers': safe_getattr(sub, 'answers'),
+                'timestamp': safe_isoformat(safe_getattr(sub, 'timestamp'))
+            } for sub in test_submissions]
+        except Exception as e:
+            print(f"Error processing test submissions: {e}")
+            response_data['test_submissions'] = []
+        
+        # Process mood groove results safely
+        try:
+            response_data['mood_groove_results'] = [{
+                'id': safe_getattr(res, 'id'),
+                'user_id': safe_getattr(res, 'user_id'),
+                'user_email': safe_getattr(res, 'user_email'),
+                'dominant_mood': safe_getattr(res, 'dominant_mood'),
+                'confidence': safe_getattr(res, 'confidence'),
+                'depression': safe_getattr(res, 'depression'),
+                'anxiety': safe_getattr(res, 'anxiety'),
+                'expressions': safe_getattr(res, 'expressions'),
+                'timestamp': safe_isoformat(safe_getattr(res, 'timestamp'))
+            } for res in all_mood_results.values()]
+        except Exception as e:
+            print(f"Error processing mood groove results: {e}")
+            response_data['mood_groove_results'] = []
+        
+        # Process breathing exercises safely
+        try:
+            response_data['breathing_exercises'] = [{
+                'id': safe_getattr(log, 'id'),
+                'user_id': safe_getattr(log, 'user_id'),
+                'exercise_name': safe_getattr(log, 'exercise_name'),
+                'duration_seconds': safe_getattr(log, 'duration_seconds'),
+                'timestamp': safe_isoformat(safe_getattr(log, 'timestamp'))
+            } for log in breathing_logs]
+        except Exception as e:
+            print(f"Error processing breathing exercises: {e}")
+            response_data['breathing_exercises'] = []
+        
+        # Process facial analysis sessions safely
+        try:
+            response_data['facial_analysis_sessions'] = [{
+                'id': safe_getattr(session, 'id'),
+                'user_email': safe_getattr(session, 'user_email'),
+                'session_start_time': safe_isoformat(safe_getattr(session, 'session_start_time')),
+                'session_end_time': safe_isoformat(safe_getattr(session, 'session_end_time')),
+                'total_detections': safe_getattr(session, 'total_detections'),
+                'dominant_mood': safe_getattr(session, 'dominant_mood'),
+                'avg_confidence': safe_getattr(session, 'avg_confidence'),
+                'avg_depression': safe_getattr(session, 'avg_depression'),
+                'avg_anxiety': safe_getattr(session, 'avg_anxiety'),
+                'mood_distribution': safe_getattr(session, 'mood_distribution'),
+                'raw_data': safe_getattr(session, 'raw_data'),
+                'timestamp': safe_isoformat(safe_getattr(session, 'timestamp'))
+            } for session in facial_sessions]
+        except Exception as e:
+            print(f"Error processing facial analysis sessions: {e}")
+            response_data['facial_analysis_sessions'] = []
+        
+        # Process comprehensive assessments safely
+        try:
+            response_data['comprehensive_assessments'] = [{
+                'id': safe_getattr(assessment, 'id'),
+                'session_id': safe_getattr(assessment, 'session_id'),
+                'status': safe_getattr(assessment, 'status'),
+                'started_at': safe_isoformat(safe_getattr(assessment, 'started_at')),
+                'completed_at': safe_isoformat(safe_getattr(assessment, 'completed_at')),
+                'phq9_score': safe_getattr(assessment, 'phq9_score'),
+                'phq9_severity': safe_getattr(assessment, 'phq9_severity'),
+                'gad7_score': safe_getattr(assessment, 'gad7_score'),
+                'gad7_severity': safe_getattr(assessment, 'gad7_severity'),
+                'mood_groove_dominant_mood': safe_getattr(assessment, 'mood_groove_dominant_mood'),
+                'mood_groove_confidence': safe_getattr(assessment, 'mood_groove_confidence'),
+                'mood_groove_depression': safe_getattr(assessment, 'mood_groove_depression'),
+                'mood_groove_anxiety': safe_getattr(assessment, 'mood_groove_anxiety'),
+                'resilience_score': safe_getattr(assessment, 'resilience_score'),
+                'stress_score': safe_getattr(assessment, 'stress_score'),
+                'sleep_quality_score': safe_getattr(assessment, 'sleep_quality_score'),
+                'social_support_score': safe_getattr(assessment, 'social_support_score'),
+                'overall_severity': safe_getattr(assessment, 'overall_severity'),
+                'risk_level': safe_getattr(assessment, 'risk_level'),
+                'analysis_prompt': safe_getattr(assessment, 'analysis_prompt'),
+                'timestamp': safe_isoformat(safe_getattr(assessment, 'timestamp'))
+            } for assessment in comprehensive_assessments]
+        except Exception as e:
+            print(f"Error processing comprehensive assessments: {e}")
+            response_data['comprehensive_assessments'] = []
+        
+        # Process user profile safely
+        try:
+            if user_profile:
+                response_data['user_profile'] = {
+                    'id': safe_getattr(user_profile, 'id'),
+                    'email': safe_getattr(user_profile, 'email'),
+                    'full_name': safe_getattr(user_profile, 'full_name'),
+                    'age': safe_getattr(user_profile, 'age'),
+                    'gender': safe_getattr(user_profile, 'gender'),
+                    'updated_at': safe_isoformat(safe_getattr(user_profile, 'updated_at'))
+                }
+        except Exception as e:
+            print(f"Error processing user profile: {e}")
+            response_data['user_profile'] = None
+        
+        return jsonify(response_data)
     except Exception as e:
-        return jsonify({'error': f'Failed to fetch unified dashboard data: {str(e)}'}), 500
+        log_error('/api/dashboard/unified', e, user_id, {
+            'user_email': user_email,
+            'test_submissions_count': len(test_submissions) if 'test_submissions' in locals() else 0,
+            'mood_results_count': len(all_mood_results) if 'all_mood_results' in locals() else 0
+        })
+        error_response, status_code = create_error_response(
+            'Failed to fetch unified dashboard data',
+            str(e)
+        )
+        return jsonify(error_response), status_code
 
 # --- Dashboard ---
 
@@ -461,7 +543,7 @@ def dashboard_overall(user_id):
             'score': sub.score,
             'severity': sub.severity,
             'answers': sub.answers,
-            'timestamp': sub.timestamp.isoformat()
+            'timestamp': safe_isoformat(sub.timestamp)
         } for sub in test_submissions],
         'mood_groove_results': [{
             'id': res.id,
@@ -471,14 +553,14 @@ def dashboard_overall(user_id):
             'depression': res.depression,
             'anxiety': res.anxiety,
             'expressions': res.expressions,
-            'timestamp': res.timestamp.isoformat()
+            'timestamp': safe_isoformat(res.timestamp)
         } for res in mood_groove_results],
         'breathing_exercises': [{
             'id': log.id,
             'user_id': log.user_id,
             'exercise_name': log.exercise_name,
             'duration_seconds': log.duration_seconds,
-            'timestamp': log.timestamp.isoformat()
+            'timestamp': safe_isoformat(log.timestamp)
         } for log in breathing_logs],
         'test_count': test_count
     })
@@ -518,7 +600,7 @@ def dashboard(user_id):
             'score': sub.score,
             'severity': sub.severity,
             'answers': sub.answers,
-            'timestamp': sub.timestamp.isoformat()
+            'timestamp': safe_isoformat(sub.timestamp)
         } for sub in test_submissions],
         'mood_groove_results': [{
             'id': res.id,
@@ -528,14 +610,14 @@ def dashboard(user_id):
             'depression': res.depression,
             'anxiety': res.anxiety,
             'expressions': res.expressions,
-            'timestamp': res.timestamp.isoformat()
+            'timestamp': safe_isoformat(res.timestamp)
         } for res in mood_groove_results],
         'breathing_exercises': [{
             'id': log.id,
             'user_id': log.user_id,
             'exercise_name': log.exercise_name,
             'duration_seconds': log.duration_seconds,
-            'timestamp': log.timestamp.isoformat()
+            'timestamp': safe_isoformat(log.timestamp)
         } for log in breathing_logs],
         'test_count': test_count
     })
@@ -548,8 +630,8 @@ def facial_analysis_dashboard(user_email):
         'facial_analysis_sessions': [{
             'id': session.id,
             'user_email': session.user_email,
-            'session_start_time': session.session_start_time.isoformat(),
-            'session_end_time': session.session_end_time.isoformat(),
+            'session_start_time': safe_isoformat(session.session_start_time),
+            'session_end_time': safe_isoformat(session.session_end_time),
             'total_detections': session.total_detections,
             'dominant_mood': session.dominant_mood,
             'avg_confidence': session.avg_confidence,
@@ -557,7 +639,7 @@ def facial_analysis_dashboard(user_email):
             'avg_anxiety': session.avg_anxiety,
             'mood_distribution': session.mood_distribution,
             'raw_data': session.raw_data,
-            'timestamp': session.timestamp.isoformat()
+            'timestamp': safe_isoformat(session.timestamp)
         } for session in facial_sessions],
         'total_sessions': len(facial_sessions)
     })
@@ -612,8 +694,8 @@ def get_comprehensive_assessment(session_id):
                 'session_id': assessment.session_id,
                 'user_id': assessment.user_id,
                 'status': assessment.status,
-                'started_at': assessment.started_at.isoformat(),
-                'completed_at': assessment.completed_at.isoformat() if assessment.completed_at else None,
+                'started_at': safe_isoformat(assessment.started_at),
+                'completed_at': safe_isoformat(assessment.completed_at),
                 'phq9_score': assessment.phq9_score,
                 'phq9_severity': assessment.phq9_severity,
                 'gad7_score': assessment.gad7_score,
@@ -631,7 +713,7 @@ def get_comprehensive_assessment(session_id):
             'session': {
                 'current_step': session_data.current_step if session_data else 'introduction',
                 'session_data': session_data.session_data if session_data else {},
-                'last_activity': session_data.last_activity.isoformat() if session_data else None
+                'last_activity': safe_isoformat(session_data.last_activity) if session_data else None
             }
         })
         
@@ -849,8 +931,8 @@ def get_user_assessments(user_id):
             'id': assessment.id,
             'session_id': assessment.session_id,
             'status': assessment.status,
-            'started_at': assessment.started_at.isoformat(),
-            'completed_at': assessment.completed_at.isoformat() if assessment.completed_at else None,
+            'started_at': safe_isoformat(assessment.started_at),
+            'completed_at': safe_isoformat(assessment.completed_at),
             'overall_severity': assessment.overall_severity,
             'risk_level': assessment.risk_level,
             'phq9_score': assessment.phq9_score,
@@ -871,19 +953,24 @@ def get_profile(user_id):
         
         if profile:
             return jsonify({
-                'id': profile.id,
-                'email': profile.email,
-                'full_name': profile.full_name,
-                'age': profile.age,
-                'gender': profile.gender,
-                'created_at': profile.created_at.isoformat(),
-                'updated_at': profile.updated_at.isoformat()
+                'id': safe_getattr(profile, 'id'),
+                'email': safe_getattr(profile, 'email'),
+                'full_name': safe_getattr(profile, 'full_name'),
+                'age': safe_getattr(profile, 'age'),
+                'gender': safe_getattr(profile, 'gender'),
+                'created_at': safe_isoformat(safe_getattr(profile, 'created_at')),
+                'updated_at': safe_isoformat(safe_getattr(profile, 'updated_at'))
             })
         else:
             return jsonify({'error': 'Profile not found'}), 404
             
     except Exception as e:
-        return jsonify({'error': f'Failed to fetch profile: {str(e)}'}), 500
+        log_error('/api/profile', e, user_id)
+        error_response, status_code = create_error_response(
+            'Failed to fetch profile',
+            str(e)
+        )
+        return jsonify(error_response), status_code
 
 @app.route('/api/profile', methods=['POST'])
 def create_profile():
@@ -935,19 +1022,24 @@ def get_profile_by_email(email):
         
         if profile:
             return jsonify({
-                'id': profile.id,
-                'email': profile.email,
-                'full_name': profile.full_name,
-                'age': profile.age,
-                'gender': profile.gender,
-                'created_at': profile.created_at.isoformat(),
-                'updated_at': profile.updated_at.isoformat()
+                'id': safe_getattr(profile, 'id'),
+                'email': safe_getattr(profile, 'email'),
+                'full_name': safe_getattr(profile, 'full_name'),
+                'age': safe_getattr(profile, 'age'),
+                'gender': safe_getattr(profile, 'gender'),
+                'created_at': safe_isoformat(safe_getattr(profile, 'created_at')),
+                'updated_at': safe_isoformat(safe_getattr(profile, 'updated_at'))
             })
         else:
             return jsonify({'error': 'Profile not found'}), 404
             
     except Exception as e:
-        return jsonify({'error': f'Failed to fetch profile: {str(e)}'}), 500
+        log_error('/api/profile/email', e, additional_context={'email': email})
+        error_response, status_code = create_error_response(
+            'Failed to fetch profile',
+            str(e)
+        )
+        return jsonify(error_response), status_code
 
 @app.route('/api/profile/<user_id>', methods=['DELETE'])
 def delete_profile(user_id):
@@ -967,6 +1059,133 @@ def delete_profile(user_id):
         db.session.rollback()
         print(f"Error deleting profile: {str(e)}")
         return jsonify({'error': f'Failed to delete profile: {str(e)}'}), 500
+
+@app.route('/api/dashboard/<user_email>', methods=['GET'])
+def dashboard_by_email(user_email):
+    """Get dashboard data by user email"""
+    try:
+        print(f"Dashboard: Fetching data for user_email={user_email}")
+        
+        # Find user profile by email to get user_id
+        user_profile = Profile.query.filter_by(email=user_email).first()
+        if not user_profile:
+            print(f"No profile found for email: {user_email}")
+            # Return empty data structure instead of error
+            return jsonify({
+                'test_submissions': [],
+                'mood_groove_results': [],
+                'breathing_exercises': [],
+                'comprehensive_assessments': [],
+                'facial_analysis_sessions': [],
+                'test_count': 0,
+                'comprehensive_assessments_count': 0,
+                'total_sessions': 0,
+                'user_profile': None
+            })
+        
+        user_id = str(user_profile.id)  # Convert UUID to string for compatibility
+        print(f"Found user_id: {user_id} for email: {user_email}")
+        
+        # Fetch test submissions by user_id
+        test_submissions = TestSubmission.query.filter_by(user_id=user_id).all()
+        print(f"Found {len(test_submissions)} test submissions")
+        
+        # Fetch mood groove results by user_id and user_email
+        mood_groove_results = MoodGrooveResult.query.filter(
+            (MoodGrooveResult.user_id == user_id) | 
+            (MoodGrooveResult.user_email == user_email)
+        ).all()
+        print(f"Found {len(mood_groove_results)} mood groove results")
+        
+        # Fetch breathing exercises by user_id
+        breathing_logs = BreathingExerciseLog.query.filter_by(user_id=user_id).all()
+        print(f"Found {len(breathing_logs)} breathing exercises")
+        
+        # Fetch facial analysis by user_email
+        facial_sessions = FacialAnalysisSession.query.filter_by(user_email=user_email).all()
+        print(f"Found {len(facial_sessions)} facial analysis sessions")
+        
+        # Fetch comprehensive assessments by user_id
+        comprehensive_assessments = ComprehensiveAssessment.query.filter_by(user_id=user_id).all()
+        print(f"Found {len(comprehensive_assessments)} comprehensive assessments")
+
+        return jsonify({
+            'test_submissions': [{
+                'id': sub.id,
+                'user_id': sub.user_id,
+                'test_type': sub.test_type,
+                'score': sub.score,
+                'severity': sub.severity,
+                'answers': sub.answers,
+                'timestamp': safe_isoformat(sub.timestamp)
+            } for sub in test_submissions],
+            'mood_groove_results': [{
+                'id': res.id,
+                'user_id': res.user_id,
+                'user_email': res.user_email,
+                'dominant_mood': res.dominant_mood,
+                'confidence': res.confidence,
+                'depression': res.depression,
+                'anxiety': res.anxiety,
+                'timestamp': safe_isoformat(res.timestamp)
+            } for res in mood_groove_results],
+            'breathing_exercises': [{
+                'id': log.id,
+                'user_id': log.user_id,
+                'exercise_name': log.exercise_name,
+                'duration_seconds': log.duration_seconds,
+                'timestamp': safe_isoformat(log.timestamp)
+            } for log in breathing_logs],
+            'comprehensive_assessments': [{
+                'id': assessment.id,
+                'session_id': assessment.session_id,
+                'status': assessment.status,
+                'started_at': safe_isoformat(assessment.started_at),
+                'completed_at': safe_isoformat(assessment.completed_at),
+                'phq9_score': assessment.phq9_score,
+                'phq9_severity': assessment.phq9_severity,
+                'gad7_score': assessment.gad7_score,
+                'gad7_severity': assessment.gad7_severity,
+                'mood_groove_dominant_mood': assessment.mood_groove_dominant_mood,
+                'mood_groove_confidence': assessment.mood_groove_confidence,
+                'mood_groove_depression': assessment.mood_groove_depression,
+                'mood_groove_anxiety': assessment.mood_groove_anxiety,
+                'resilience_score': assessment.resilience_score,
+                'stress_score': assessment.stress_score,
+                'sleep_quality_score': assessment.sleep_quality_score,
+                'social_support_score': assessment.social_support_score,
+                'overall_severity': assessment.overall_severity,
+                'risk_level': assessment.risk_level,
+                'timestamp': safe_isoformat(assessment.timestamp)
+            } for assessment in comprehensive_assessments],
+            'facial_analysis_sessions': [{
+                'id': session.id,
+                'user_email': session.user_email,
+                'session_start_time': safe_isoformat(session.session_start_time),
+                'session_end_time': safe_isoformat(session.session_end_time),
+                'total_detections': session.total_detections,
+                'dominant_mood': session.dominant_mood,
+                'avg_confidence': session.avg_confidence,
+                'avg_depression': session.avg_depression,
+                'avg_anxiety': session.avg_anxiety,
+                'timestamp': safe_isoformat(session.timestamp)
+            } for session in facial_sessions],
+            'test_count': len(test_submissions),
+            'comprehensive_assessments_count': len(comprehensive_assessments),
+            'total_sessions': len(facial_sessions),
+            'user_profile': {
+                'id': user_profile.id,
+                'email': user_profile.email,
+                'full_name': user_profile.full_name,
+                'age': user_profile.age,
+                'gender': user_profile.gender,
+                'updated_at': safe_isoformat(user_profile.updated_at)
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error fetching dashboard data: {str(e)}")
+        return jsonify({'error': f'Failed to fetch dashboard data: {str(e)}'}), 500
 
 @app.route('/api/profile/<user_id>', methods=['PUT'])
 def update_profile(user_id):
@@ -1008,19 +1227,24 @@ def update_profile(user_id):
         return jsonify({
             'message': 'Profile updated successfully',
             'profile': {
-                'id': profile.id,
-                'email': profile.email,
-                'full_name': profile.full_name,
-                'age': profile.age,
-                'gender': profile.gender,
-                'updated_at': profile.updated_at.isoformat()
+                'id': safe_getattr(profile, 'id'),
+                'email': safe_getattr(profile, 'email'),
+                'full_name': safe_getattr(profile, 'full_name'),
+                'age': safe_getattr(profile, 'age'),
+                'gender': safe_getattr(profile, 'gender'),
+                'updated_at': safe_isoformat(safe_getattr(profile, 'updated_at'))
             }
         })
         
     except Exception as e:
         db.session.rollback()
         print(f"Error updating profile: {str(e)}")
-        return jsonify({'error': f'Failed to update profile: {str(e)}'}), 500
+        log_error('/api/profile', e, user_id)
+        error_response, status_code = create_error_response(
+            'Failed to update profile',
+            str(e)
+        )
+        return jsonify(error_response), status_code
 
 # --- Database Debug Routes ---
 
@@ -1109,5 +1333,5 @@ def reset_db():
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5001))
-    debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    debug = True  # Enable debug mode temporarily
     app.run(debug=debug, port=port, host='0.0.0.0')

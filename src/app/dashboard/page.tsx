@@ -1,688 +1,551 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
-import { useSession } from '@supabase/auth-helpers-react';
-import { supabase } from '@/lib/supabase/client';
-import { getCurrentUserProfile, getCurrentUserEmail } from '@/lib/services/userProfileService';
-import { testBackendConnection, getUserProfileFromBackend } from '@/lib/services/backendSync';
-import Link from 'next/link';
-import { useTranslation, Trans } from 'react-i18next';
-import { TestPerformanceChart } from '@/components/features/dashboard/TestPerformanceChart';
-import { MoodGrooveChart } from '@/components/features/dashboard/MoodGrooveChart';
-import { SummaryCard } from '@/components/features/dashboard/SummaryCard';
-import { FacialAnalysisChart } from '@/components/features/dashboard/FacialAnalysisChart';
-import { TestSubmission, MoodGrooveResult } from '@/types';
-import html2canvas from 'html2canvas';
-import { DateRange } from 'react-day-picker';
-import { Calendar } from '@/components/ui/calendar';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, BarChart2, Smile, Activity, CheckCircle, Clock, Brain } from 'lucide-react';
-import { FAQ } from '@/components/common/FAQ';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import { useAuth } from '@/context/AuthContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { format } from 'date-fns';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 
-interface FacialAnalysisSession {
-  id: number;
-  user_email: string;
-  session_start_time: string;
-  session_end_time: string;
-  total_detections: number;
-  dominant_mood: string;
-  avg_confidence: number;
-  avg_depression: number;
-  avg_anxiety: number;
-  mood_distribution: Record<string, number>;
-  raw_data: any[];
-  timestamp: string;
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+type DashboardStatus = 'idle' | 'loading' | 'success' | 'error';
+
+interface DashboardState {
+  data: any | null;
+  status: DashboardStatus;
+  error: string | null;
+  lastFetchTime: number | null;
 }
 
-interface ComprehensiveAssessment {
-  id: number;
-  session_id: string;
-  status: string;
-  started_at: string;
-  completed_at: string | null;
-  phq9_score: number | null;
-  phq9_severity: string | null;
-  gad7_score: number | null;
-  gad7_severity: string | null;
-  mood_groove_dominant_mood: string | null;
-  mood_groove_confidence: number | null;
-  mood_groove_depression: number | null;
-  mood_groove_anxiety: number | null;
-  resilience_score: number | null;
-  stress_score: number | null;
-  sleep_quality_score: number | null;
-  social_support_score: number | null;
-  overall_severity: string | null;
-  risk_level: string | null;
-  analysis_prompt: string | null;
-  timestamp: string;
-}
+export default function DashboardPage() {
+  const { t } = useTranslation(['dashboard', 'common']);
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const [selectedTab, setSelectedTab] = useState('overview');
+  const [dashboardState, setDashboardState] = useState<DashboardState>({
+    data: null,
+    status: 'idle',
+    error: null,
+    lastFetchTime: null,
+  });
 
-interface DashboardData {
-  test_submissions: TestSubmission[];
-  mood_groove_results: MoodGrooveResult[];
-  breathing_exercises: {
-    id: number;
-    user_id: string;
-    exercise_name: string;
-    duration_seconds: number;
-    timestamp: string;
-  }[];
-  comprehensive_assessments: ComprehensiveAssessment[];
-  test_count: number;
-  comprehensive_assessments_count: number;
-}
+  const downloadDashboardImage = useCallback(async () => {
+    try {
+      const dashboardElement = document.getElementById('dashboard-container');
+      if (!dashboardElement) return;
 
-interface FacialAnalysisData {
-  facial_analysis_sessions: FacialAnalysisSession[];
-  total_sessions: number;
-}
+      const canvas = await html2canvas(dashboardElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: dashboardElement.scrollWidth,
+        height: dashboardElement.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
+      });
 
-const DashboardPage = () => {
-  const session = useSession();
-  const { t } = useTranslation('dashboard');
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [facialAnalysisData, setFacialAnalysisData] = useState<FacialAnalysisData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [authChecking, setAuthChecking] = useState(true);
-  const dashboardRef = useRef<HTMLDivElement>(null);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
-
-  // Check authentication on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Import simple auth
-        const { isAuthenticated, getCurrentUser } = await import('@/lib/auth/simpleAuth');
-        
-        if (!isAuthenticated()) {
-          console.log('No authenticated user found, redirecting to login');
-          window.location.href = '/login';
-          return;
-        }
-
-        const user = getCurrentUser();
-        console.log('User authenticated:', user?.email);
-        
-        if (!user) {
-          console.log('No user data found, redirecting to login');
-          window.location.href = '/login';
-          return;
-        }
-
-        console.log('User profile complete:', user);
-        
-        // Test backend connection and fetch backend profile
-        const backendConnected = await testBackendConnection();
-        if (backendConnected) {
-          const backendProfile = await getUserProfileFromBackend(user.id);
-          console.log('Backend profile:', backendProfile);
-        }
-        
-        setAuthChecking(false);
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        window.location.href = '/login';
-      }
-    };
-    checkAuth();
-  }, []);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const dropdown = document.getElementById('date-filter-dropdown');
-      const button = event.target as HTMLElement;
-      if (dropdown && !dropdown.contains(button) && !button.closest('[data-dropdown-trigger]')) {
-        dropdown.classList.add('hidden');
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const currentUser = session?.user;
-    
-    if (currentUser?.id && currentUser?.email) {
-      const fetchData = async () => {
-        try {
-          localStorage.setItem('userEmail', currentUser.email || '');
-          localStorage.setItem('userId', currentUser.id);
-
-          console.log('Dashboard: Fetching data for user:', {
-            userId: currentUser.id,
-            userEmail: currentUser.email
-          });
-
-          localStorage.setItem('debug_user_info', JSON.stringify({
-            userId: currentUser.id,
-            userEmail: currentUser.email,
-            timestamp: new Date().toISOString()
-          }));
-
-          // For demo purposes, show sample data if API calls fail
-          if (!session?.user?.id) {
-            console.log('Dashboard: Using sample data for local auth user');
-            
-            // Set sample data for local auth users
-            setDashboardData({
-              test_submissions: [],
-              mood_groove_results: [],
-              breathing_exercises: [],
-              comprehensive_assessments: []
-            });
-            
-            setStats({
-              totalTests: 0,
-              moodGrooveResults: 0,
-              breathingExercises: 0,
-              facialSessions: 0
-            });
-            
-            setFacialAnalysisData({
-              facial_analysis_sessions: [],
-              total_sessions: 0
-            });
-            
-            setLoading(false);
-            return;
-          }
-
-          // Debug: Test the exact API call for real users
-          console.log('Dashboard: API URL:', `http://127.0.0.1:5001/api/dashboard/unified/${currentUser.id}/${currentUser.email}`);
-
-          const unifiedResponse = await fetch(`http://127.0.0.1:5001/api/dashboard/unified/${currentUser.id}/${currentUser.email}`);
-          
-          console.log('Dashboard: Unified response status:', unifiedResponse.status);
-          
-          if (unifiedResponse.ok) {
-            const unifiedData = await unifiedResponse.json();
-            console.log('Dashboard: Unified data received:', {
-              testSubmissions: unifiedData.test_submissions?.length || 0,
-              moodGrooveResults: unifiedData.mood_groove_results?.length || 0,
-              breathingExercises: unifiedData.breathing_exercises?.length || 0,
-              facialSessions: unifiedData.facial_analysis_sessions?.length || 0
-            });
-            
-            setDashboardData({
-              test_submissions: unifiedData.test_submissions,
-              mood_groove_results: unifiedData.mood_groove_results,
-              breathing_exercises: unifiedData.breathing_exercises,
-              comprehensive_assessments: unifiedData.comprehensive_assessments || [],
-              test_count: unifiedData.test_count,
-              comprehensive_assessments_count: unifiedData.comprehensive_assessments_count || 0
-            });
-            setFacialAnalysisData({
-              facial_analysis_sessions: unifiedData.facial_analysis_sessions,
-              total_sessions: unifiedData.total_sessions
-            });
-          } else {
-            console.error('Failed to fetch unified dashboard data. Status:', unifiedResponse.status);
-            const errorText = await unifiedResponse.text();
-            console.error('Error details:', errorText);
-          }
-        } catch (error) {
-          console.error('Error fetching dashboard data:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchData();
-    } else {
-      setLoading(false);
-    }
-  }, [session]);
-
-  const handleDownloadImage = (format: 'png' | 'jpg' = 'png') => {
-    if (!dashboardRef.current) return;
-    
-    const button = document.querySelector('[data-download-btn]') as HTMLButtonElement;
-    if (button) {
-      button.disabled = true;
-      button.textContent = 'Generating...';
-    }
-
-    html2canvas(dashboardRef.current, {
-      backgroundColor: format === 'jpg' ? '#111827' : null,
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      width: dashboardRef.current.scrollWidth,
-      height: dashboardRef.current.scrollHeight,
-      scrollX: 0,
-      scrollY: 0
-    }).then((canvas) => {
       const link = document.createElement('a');
-      const timestamp = new Date().toISOString().split('T')[0];
-      const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
-      
-      if (format === 'jpg') {
-        link.download = `calmnest-dashboard-${timestamp}-${time}.jpg`;
-        link.href = canvas.toDataURL('image/jpeg', 0.9);
-      } else {
-        link.download = `calmnest-dashboard-${timestamp}-${time}.png`;
-        link.href = canvas.toDataURL('image/png', 1.0);
-      }
+      link.download = `mental-health-dashboard-${format(new Date(), 'yyyy-MM-dd-HH-mm')}.png`;
+      link.href = canvas.toDataURL('image/png');
       
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading dashboard image:', error);
+    }
+  }, []);
+
+  const downloadReport = useCallback(() => {
+    if (!dashboardState.data) return;
+
+    const doc = new jsPDF();
+    doc.setFont('helvetica');
+    doc.setFontSize(16);
+    
+    doc.text('Mental Health Analysis Report', 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Generated on: ${format(new Date(), 'MM/dd/yyyy')}`, 20, 30);
+    doc.text(`User: ${dashboardState.data?.user_profile?.full_name || 'Anonymous'}`, 20, 40);
+
+    let yPosition = 60;
+
+    if (dashboardState.data?.test_submissions?.length > 0) {
+      doc.setFontSize(14);
+      doc.text('Test Submissions Summary', 20, yPosition);
+      yPosition += 10;
       
-      alert(`Dashboard ${format.toUpperCase()} downloaded successfully!`);
-    }).catch((error) => {
-      console.error('Error generating dashboard image:', error);
-      alert('Failed to download dashboard image. Please try again.');
-    }).finally(() => {
-      if (button) {
-        button.disabled = false;
-        button.innerHTML = `<svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Download Image`;
+      const testData = dashboardState.data.test_submissions.map((test: any) => [
+        format(new Date(test.timestamp), 'MM/dd/yyyy'),
+        test.test_type,
+        test.score.toString(),
+        test.severity,
+      ]);
+
+      (doc as any).autoTable({
+        startY: yPosition,
+        head: [['Date', 'Test Type', 'Score', 'Severity']],
+        body: testData,
+      });
+
+      yPosition = (doc as any).lastAutoTable.finalY + 20;
+    }
+
+    if (yPosition > 200) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    if (dashboardState.data?.mood_groove_results?.length > 0) {
+      doc.setFontSize(14);
+      doc.text('Mood Analysis Summary', 20, yPosition);
+      yPosition += 10;
+
+      const moodData = dashboardState.data.mood_groove_results.map((result: any) => [
+        format(new Date(result.timestamp), 'MM/dd/yyyy'),
+        result.dominant_mood,
+        result.confidence.toFixed(2),
+        result.depression.toFixed(2),
+        result.anxiety.toFixed(2),
+      ]);
+
+      (doc as any).autoTable({
+        startY: yPosition,
+        head: [['Date', 'Mood', 'Confidence', 'Depression', 'Anxiety']],
+        body: moodData,
+      });
+
+      yPosition = (doc as any).lastAutoTable.finalY + 20;
+    }
+
+    doc.save('mental-health-analysis-report.pdf');
+  }, [dashboardState.data]);
+
+  const fetchDashboardData = useCallback(async (email: string) => {
+    const startTime = Date.now();
+    console.log(`[Dashboard] Starting API fetch for email: ${email}`);
+    
+    try {
+      setDashboardState(prev => {
+        console.log(`[Dashboard] State transition: ${prev.status} → loading`);
+        return {
+          ...prev,
+          status: 'loading',
+          error: null,
+        };
+      });
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${apiUrl}/api/dashboard/${email}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch dashboard data: ${response.status} ${response.statusText}`);
       }
-    });
+      
+      const data = await response.json();
+      const fetchDuration = Date.now() - startTime;
+      console.log(`[Dashboard] API fetch completed in ${fetchDuration}ms. Data summary:`, {
+        testSubmissions: data.test_submissions?.length || 0,
+        moodResults: data.mood_groove_results?.length || 0,
+        comprehensiveAssessments: data.comprehensive_assessments?.length || 0,
+        userProfile: !!data.user_profile
+      });
+      
+      setDashboardState({
+        data,
+        status: 'success',
+        error: null,
+        lastFetchTime: Date.now(),
+      });
+      
+      console.log(`[Dashboard] State transition: loading → success`);
+    } catch (error) {
+      const fetchDuration = Date.now() - startTime;
+      console.error(`[Dashboard] API fetch failed after ${fetchDuration}ms:`, error);
+      setDashboardState(prev => ({
+        ...prev,
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Failed to load dashboard data',
+      }));
+      console.log(`[Dashboard] State transition: loading → error`);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) {
+      console.log('[Dashboard] Waiting for auth to complete...');
+      return;
+    }
+    
+    const email = user?.email || 
+                  (typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null) ||
+                  'aman2626786@gmail.com'; // Fallback for testing
+    
+    console.log(`[Dashboard] Effect triggered - Auth: ${authLoading ? 'loading' : 'ready'}, Email: ${email}, Status: ${dashboardState.status}`);
+    
+    // Only fetch data if we haven't fetched it yet and we're not already loading
+    if (dashboardState.status === 'idle' && email) {
+      console.log(`[Dashboard] Conditions met for data fetch - triggering API call`);
+      fetchDashboardData(email);
+    } else if (dashboardState.status !== 'idle') {
+      console.log(`[Dashboard] Skipping fetch - status is ${dashboardState.status}`);
+    } else if (!email) {
+      console.log(`[Dashboard] Skipping fetch - no email available`);
+    }
+  }, [authLoading, user?.email, dashboardState.status, fetchDashboardData]);
+
+  useEffect(() => {
+    const handleDownload = () => {
+      downloadReport();
+    };
+    window.addEventListener('downloadReport', handleDownload);
+
+    return () => {
+      window.removeEventListener('downloadReport', handleDownload);
+    };
+  }, [downloadReport]);
+
+  const processTestSubmissionData = () => {
+    if (!dashboardState.data?.test_submissions) return [];
+    
+    return dashboardState.data.test_submissions.map((test: any) => ({
+      date: format(new Date(test.timestamp), 'MM/dd/yyyy'),
+      score: test.score,
+      type: test.test_type,
+      severity: test.severity,
+    }));
   };
 
-  if (authChecking || loading) {
+  const processMoodGrooveData = () => {
+    if (!dashboardState.data?.mood_groove_results) return [];
+
+    return dashboardState.data.mood_groove_results.map((result: any) => ({
+      date: format(new Date(result.timestamp), 'MM/dd/yyyy'),
+      confidence: result.confidence,
+      depression: result.depression,
+      anxiety: result.anxiety,
+      mood: result.dominant_mood,
+    }));
+  };
+
+  const processComprehensiveData = () => {
+    if (!dashboardState.data?.comprehensive_assessments) return [];
+
+    return dashboardState.data.comprehensive_assessments.map((assessment: any) => ({
+      date: format(new Date(assessment.timestamp), 'MM/dd/yyyy'),
+      phq9Score: assessment.phq9_score,
+      gad7Score: assessment.gad7_score,
+      resilienceScore: assessment.resilience_score,
+      stressScore: assessment.stress_score,
+      sleepScore: assessment.sleep_quality_score,
+      socialScore: assessment.social_support_score,
+      overallSeverity: assessment.overall_severity,
+      riskLevel: assessment.risk_level,
+    }));
+  };
+
+  const calculateMoodDistribution = () => {
+    if (!dashboardState.data?.mood_groove_results) return [];
+
+    const moodCounts = dashboardState.data.mood_groove_results.reduce((acc: any, result: any) => {
+      acc[result.dominant_mood] = (acc[result.dominant_mood] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(moodCounts).map(([mood, count]) => ({
+      mood,
+      count,
+    }));
+  };
+
+  const handleRetry = () => {
+    const email = user?.email || 
+                  (typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null) ||
+                  'aman2626786@gmail.com';
+    
+    console.log(`[Dashboard] Manual retry triggered for email: ${email}`);
+    
+    setDashboardState(prev => {
+      console.log(`[Dashboard] State transition: ${prev.status} → idle (retry)`);
+      return {
+        ...prev,
+        status: 'idle',
+        error: null,
+      };
+    });
+    
+    if (email) {
+      fetchDashboardData(email);
+    } else {
+      console.error('[Dashboard] Cannot retry - no email available');
+    }
+  };
+
+  if (authLoading || dashboardState.status === 'loading') {
     return (
-      <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p>Loading dashboard...</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500" role="status" aria-label="Loading dashboard data"></div>
+      </div>
+    );
+  }
+
+  if (dashboardState.status === 'error') {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+          <div className="text-red-500 text-xl font-semibold">Error Loading Dashboard</div>
+          <div className="text-gray-600 text-center max-w-md">{dashboardState.error}</div>
+          <Button onClick={handleRetry} className="mt-4">
+            Try Again
+          </Button>
         </div>
       </div>
     );
   }
 
-  // Data processing
-  const filteredSubmissions = dashboardData?.test_submissions.filter(sub => {
-    if (!dateRange?.from) return true;
-    const submissionDate = new Date(sub.timestamp);
-    if (dateRange.to) {
-      return submissionDate >= dateRange.from && submissionDate <= dateRange.to;
-    }
-    return submissionDate >= dateRange.from;
-  }) || [];
-
-  const filteredMoodResults = dashboardData?.mood_groove_results.filter(res => {
-    if (!dateRange?.from) return true;
-    const resultDate = new Date(res.timestamp);
-    if (dateRange.to) {
-      return resultDate >= dateRange.from && resultDate <= dateRange.to;
-    }
-    return resultDate >= dateRange.from;
-  }) || [];
-
-  const breathingLogs = dashboardData?.breathing_exercises || [];
-  const phq9Data = filteredSubmissions.filter(sub => sub.test_type === 'PHQ9');
-  const gad7Data = filteredSubmissions.filter(sub => sub.test_type === 'GAD7');
-
-  const calculateAverage = (data: TestSubmission[]) => {
-    if (data.length === 0) return '0';
-    const totalScore = data.reduce((acc, sub) => acc + sub.score, 0);
-    return (totalScore / data.length).toFixed(1);
-  };
-
-  const avgPhq9Score = calculateAverage(phq9Data);
-  const avgGad7Score = calculateAverage(gad7Data);
-
   return (
-    <div className="bg-gray-900 text-white min-h-screen p-4 sm:p-8 pt-20">
-      <div className="container mx-auto">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white">{t('title')}</h1>
-            <p className="text-gray-400 mt-1">Track your mental health journey</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Date Filter Dropdown */}
-            <div className="relative">
-              <button
-                data-dropdown-trigger
-                onClick={() => {
-                  const dropdown = document.getElementById('date-filter-dropdown');
-                  dropdown?.classList.toggle('hidden');
-                }}
-                className="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors border border-gray-600"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                {dateRange?.from ? 
-                  `${dateRange.from.toLocaleDateString()} - ${dateRange.to?.toLocaleDateString() || 'Select end'}` : 
-                  'Filter by Date'
-                }
-              </button>
-              
-              <div id="date-filter-dropdown" className="hidden absolute right-0 mt-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 p-4">
-                <Calendar
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={setDateRange}
-                  className="text-white"
-                  classNames={{
-                    months: "text-white",
-                    month: "text-white",
-                    caption: "text-white",
-                    caption_label: "text-white font-medium",
-                    nav: "text-white",
-                    nav_button: "text-white hover:bg-gray-700 rounded",
-                    nav_button_previous: "text-white hover:bg-gray-700",
-                    nav_button_next: "text-white hover:bg-gray-700",
-                    table: "text-white",
-                    head_row: "text-gray-400",
-                    head_cell: "text-gray-400 font-medium",
-                    row: "text-white",
-                    cell: "text-white hover:bg-gray-700 rounded",
-                    day: "text-white hover:bg-gray-700 rounded p-2",
-                    day_range_start: "bg-purple-600 text-white rounded",
-                    day_range_end: "bg-purple-600 text-white rounded",
-                    day_selected: "bg-purple-600 text-white rounded",
-                    day_today: "bg-gray-700 text-white rounded font-bold",
-                    day_outside: "text-gray-500",
-                    day_disabled: "text-gray-600",
-                    day_range_middle: "bg-purple-500/30 text-white",
-                    day_hidden: "invisible",
-                  }}
-                />
-                <div className="flex gap-2 mt-3 pt-3 border-t border-gray-600">
-                  <button
-                    onClick={() => {
-                      setDateRange(undefined);
-                      document.getElementById('date-filter-dropdown')?.classList.add('hidden');
-                    }}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    onClick={() => document.getElementById('date-filter-dropdown')?.classList.add('hidden')}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Date Filters */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  const today = new Date();
-                  const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-                  setDateRange({ from: lastWeek, to: today });
-                }}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm transition-colors"
-              >
-                Last 7 Days
-              </button>
-              <button
-                onClick={() => {
-                  const today = new Date();
-                  const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-                  setDateRange({ from: lastMonth, to: today });
-                }}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm transition-colors"
-              >
-                Last 30 Days
-              </button>
-            </div>
-
-            {/* Download Button */}
-            <div className="relative group">
-              <button
-                onClick={() => handleDownloadImage('png')}
-                data-download-btn
-                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                Download Image
-              </button>
-              
-              {/* Download Options Dropdown */}
-              <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-600 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                <button
-                  onClick={() => handleDownloadImage('png')}
-                  className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 rounded-t-md transition-colors"
-                >
-                  📷 Download as PNG (High Quality)
-                </button>
-                <button
-                  onClick={() => handleDownloadImage('jpg')}
-                  className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 rounded-b-md transition-colors"
-                >
-                  🖼️ Download as JPG (Smaller Size)
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Active Filter Indicator */}
-        {dateRange?.from && (
-          <div className="mb-4 p-3 bg-purple-900/30 border border-purple-500/50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <svg className="h-4 w-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-                </svg>
-                <span className="text-purple-300 font-medium">
-                  Filtered: {dateRange.from.toLocaleDateString()} - {dateRange.to?.toLocaleDateString() || 'Present'}
-                </span>
-              </div>
-              <button
-                onClick={() => setDateRange(undefined)}
-                className="text-purple-400 hover:text-purple-300 transition-colors"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div ref={dashboardRef} className="bg-gray-900 p-6 rounded-lg">
-          {dashboardData ? (
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <SummaryCard 
-                  title="Total Tests Taken" 
-                  value={filteredSubmissions.length} 
-                  icon={<FileText className="h-6 w-6 text-blue-400" />}
-                  subtitle={`${phq9Data.length} PHQ-9, ${gad7Data.length} GAD-7`}
-                />
-                <SummaryCard 
-                  title="Comprehensive Assessments" 
-                  value={dashboardData?.comprehensive_assessments_count || 0} 
-                  icon={<Activity className="h-6 w-6 text-emerald-400" />}
-                  subtitle={`${dashboardData?.comprehensive_assessments?.filter(a => a.status === 'completed').length || 0} completed`}
-                />
-                <SummaryCard 
-                  title="Avg. PHQ-9 Score" 
-                  value={avgPhq9Score} 
-                  icon={<BarChart2 className="h-6 w-6 text-purple-400" />}
-                />
-                <SummaryCard 
-                  title="Mood Sessions" 
-                  value={filteredMoodResults.length} 
-                  icon={<Smile className="h-6 w-6 text-yellow-400" />}
-                />
-              </div>
-
-              {phq9Data.length > 0 && (
-                <TestPerformanceChart data={phq9Data} title="PHQ-9 Performance" />
-              )}
-              {gad7Data.length > 0 && (
-                <TestPerformanceChart data={gad7Data} title="GAD-7 Performance" />
-              )}
-
-              {/* Comprehensive Assessments Section */}
-              {dashboardData?.comprehensive_assessments && dashboardData.comprehensive_assessments.length > 0 && (
-                <div>
-                  <h2 className="text-2xl font-bold mb-4 text-white flex items-center gap-3">
-                    <Activity className="h-6 w-6 text-emerald-400" />
-                    Comprehensive Assessments
-                  </h2>
-                  <div className="grid gap-4">
-                    {dashboardData.comprehensive_assessments.slice(0, 3).map((assessment) => (
-                      <Card key={assessment.id} className="bg-gray-800 border-gray-700">
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${
-                                assessment.status === 'completed' ? 'bg-emerald-500/20' : 
-                                assessment.status === 'in_progress' ? 'bg-yellow-500/20' : 'bg-gray-500/20'
-                              }`}>
-                                {assessment.status === 'completed' ? (
-                                  <CheckCircle className="h-5 w-5 text-emerald-400" />
-                                ) : assessment.status === 'in_progress' ? (
-                                  <Clock className="h-5 w-5 text-yellow-400" />
-                                ) : (
-                                  <Activity className="h-5 w-5 text-gray-400" />
-                                )}
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-white">
-                                  Assessment #{assessment.id}
-                                </h3>
-                                <p className="text-sm text-gray-400">
-                                  {new Date(assessment.started_at).toLocaleDateString()}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                assessment.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' : 
-                                assessment.status === 'in_progress' ? 'bg-yellow-500/20 text-yellow-300' : 
-                                'bg-gray-500/20 text-gray-300'
-                              }`}>
-                                {assessment.status === 'completed' ? 'Completed' : 
-                                 assessment.status === 'in_progress' ? 'In Progress' : 'Abandoned'}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {assessment.status === 'completed' && (
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                              {assessment.phq9_score !== null && (
-                                <div className="text-center p-3 bg-purple-500/10 rounded-lg">
-                                  <div className="text-lg font-bold text-purple-300">
-                                    {assessment.phq9_score}
-                                  </div>
-                                  <div className="text-xs text-gray-400">PHQ-9</div>
-                                  <div className="text-xs text-purple-400">
-                                    {assessment.phq9_severity}
-                                  </div>
-                                </div>
-                              )}
-                              {assessment.gad7_score !== null && (
-                                <div className="text-center p-3 bg-blue-500/10 rounded-lg">
-                                  <div className="text-lg font-bold text-blue-300">
-                                    {assessment.gad7_score}
-                                  </div>
-                                  <div className="text-xs text-gray-400">GAD-7</div>
-                                  <div className="text-xs text-blue-400">
-                                    {assessment.gad7_severity}
-                                  </div>
-                                </div>
-                              )}
-                              {assessment.mood_groove_dominant_mood && (
-                                <div className="text-center p-3 bg-yellow-500/10 rounded-lg">
-                                  <div className="text-lg font-bold text-yellow-300 capitalize">
-                                    {assessment.mood_groove_dominant_mood}
-                                  </div>
-                                  <div className="text-xs text-gray-400">Mood</div>
-                                  <div className="text-xs text-yellow-400">
-                                    {assessment.mood_groove_confidence ? 
-                                      `${(assessment.mood_groove_confidence * 100).toFixed(0)}% confidence` : 
-                                      'Analyzed'
-                                    }
-                                  </div>
-                                </div>
-                              )}
-                              {assessment.overall_severity && (
-                                <div className="text-center p-3 bg-emerald-500/10 rounded-lg">
-                                  <div className="text-lg font-bold text-emerald-300">
-                                    {assessment.overall_severity}
-                                  </div>
-                                  <div className="text-xs text-gray-400">Overall</div>
-                                  <div className="text-xs text-emerald-400">
-                                    {assessment.risk_level || 'Assessed'}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          
-                          {assessment.analysis_prompt && (
-                            <div className="mt-4 p-3 bg-gray-700/50 rounded-lg">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Brain className="h-4 w-4 text-purple-400" />
-                                <span className="text-sm font-medium text-purple-300">
-                                  AI Analysis Available
-                                </span>
-                              </div>
-                              <p className="text-xs text-gray-400">
-                                Comprehensive analysis prompt generated for chatbot guidance
-                              </p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {filteredMoodResults.length > 0 && (
-                <div>
-                  <h2 className="text-2xl font-bold mb-4 text-white">{t('moodAnalysis')}</h2>
-                  <MoodGrooveChart data={filteredMoodResults} />
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-gray-800 p-8 rounded-lg text-center shadow-lg">
-              <p className="text-gray-400 text-lg">{t('noData')}</p>
-            </div>
+    <div className="container mx-auto p-4 space-y-6" id="dashboard-container">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
+          {dashboardState.data?.user_profile && (
+            <p className="text-sm text-gray-600 mt-1">
+              {dashboardState.data.user_profile.full_name} • {format(new Date(), 'MMMM dd, yyyy')}
+            </p>
           )}
         </div>
-
-        {/* FAQ Section */}
-        <FAQ 
-          title="Dashboard FAQ"
-          faqs={[
-            {
-              question: "How do I interpret my test scores?",
-              answer: "PHQ-9 scores: 0-4 (minimal), 5-9 (mild), 10-14 (moderate), 15-19 (moderately severe), 20-27 (severe). GAD-7 scores: 0-4 (minimal), 5-9 (mild), 10-14 (moderate), 15-21 (severe). Higher scores indicate more symptoms."
-            },
-            {
-              question: "How often should I take the assessments?",
-              answer: "We recommend taking assessments weekly or bi-weekly to track your progress. However, you can take them as often as you feel necessary to monitor your mental health."
-            },
-            {
-              question: "Can I download my data?",
-              answer: "Yes! Use the 'Download Image' button to save your dashboard as a PNG or JPG file. This is useful for sharing with healthcare providers or keeping personal records."
-            },
-            {
-              question: "What do the mood analysis charts show?",
-              answer: "The mood analysis charts display your emotional patterns over time based on Mood Groove sessions. They help identify trends and patterns in your emotional well-being."
-            },
-            {
-              question: "How can I filter my data by date?",
-              answer: "Use the date filter dropdown to select custom date ranges, or click the quick filter buttons for 'Last 7 Days' or 'Last 30 Days' to view specific time periods."
-            }
-          ]}
-          className="mt-12"
-        />
+        <div className="flex gap-2">
+          <Button onClick={downloadDashboardImage} variant="outline" size="sm">
+            📸 Download Image
+          </Button>
+          <Button onClick={downloadReport} variant="outline" size="sm">
+            📄 Download PDF
+          </Button>
+        </div>
       </div>
+
+      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
+          <TabsTrigger value="moodAnalysis">{t('tabs.moodAnalysis')}</TabsTrigger>
+          <TabsTrigger value="comprehensiveAnalysis">{t('tabs.comprehensiveAnalysis')}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('cards.testsSummary')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{dashboardState.data?.test_count || 0}</p>
+                <p className="text-sm text-gray-500">{t('cards.totalTests')}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('cards.moodSessions')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{dashboardState.data?.total_sessions || 0}</p>
+                <p className="text-sm text-gray-500">{t('cards.totalSessions')}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('cards.assessments')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">
+                  {dashboardState.data?.comprehensive_assessments_count || 0}
+                </p>
+                <p className="text-sm text-gray-500">{t('cards.totalAssessments')}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>{t('cards.recentActivity')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {processTestSubmissionData().length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={processTestSubmissionData().slice(-10)}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="score" stroke="#8884d8" />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-gray-500">
+                  {t('noData')}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="moodAnalysis">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('cards.moodTrends')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {processMoodGrooveData().length > 0 ? (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={processMoodGrooveData()}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="depression" stroke="#FF8042" />
+                      <Line type="monotone" dataKey="anxiety" stroke="#FFBB28" />
+                      <Line type="monotone" dataKey="confidence" stroke="#00C49F" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[400px] text-gray-500">
+                    {t('noData')}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('cards.moodDistribution')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {calculateMoodDistribution().length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={calculateMoodDistribution()}
+                        dataKey="count"
+                        nameKey="mood"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        label
+                      >
+                        {calculateMoodDistribution().map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-gray-500">
+                    {t('noData')}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="comprehensiveAnalysis">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('cards.mentalHealthScores')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {processComprehensiveData().length > 0 ? (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={processComprehensiveData()}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="phq9Score" stroke="#8884d8" name="PHQ-9" />
+                      <Line type="monotone" dataKey="gad7Score" stroke="#82ca9d" name="GAD-7" />
+                      <Line type="monotone" dataKey="resilienceScore" stroke="#ffc658" name="Resilience" />
+                      <Line type="monotone" dataKey="stressScore" stroke="#ff7300" name="Stress" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[400px] text-gray-500">
+                    {t('noData')}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('cards.sleepQuality')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart data={processComprehensiveData()}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="sleepScore" stroke="#8884d8" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('cards.socialSupport')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart data={processComprehensiveData()}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="socialScore" stroke="#82ca9d" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
-};
-
-export default DashboardPage;
+}

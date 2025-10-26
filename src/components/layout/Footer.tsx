@@ -52,9 +52,7 @@ export const Footer = () => {
             <h4 className="text-lg font-semibold text-white mb-6">Quick Links</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/dashboard" className="hover:text-purple-400 transition-colors flex items-center gap-2">
-                  Dashboard
-                </Link>
+
               </li>
               <li>
                 <Link href="/self-check" className="hover:text-purple-400 transition-colors">

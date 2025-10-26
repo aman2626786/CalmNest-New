@@ -65,6 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } as User;
           
           setUser(mockUser);
+          
+          // Always set auth cookie for middleware when user exists
+          console.log('AuthContext: Setting auth cookie for existing user');
+          localAuth.setAuthCookie();
+        } else {
+          // Clear auth cookie if no user
+          console.log('AuthContext: No local user found, clearing auth cookie');
+          localAuth.clearAuthCookie();
         }
         setLoading(false);
       }
@@ -137,6 +145,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } as User;
         
         setUser(mockUser);
+        
+        // Set auth cookie for middleware
+        localAuth.setAuthCookie();
+        
         return { error: null };
       }
     } catch (error) {
@@ -160,6 +172,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localAuth.signOut();
         setUser(null);
         setSession(null);
+        
+        // Clear auth cookie
+        localAuth.clearAuthCookie();
       }
 
       console.log('Sign out successful');

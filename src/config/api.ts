@@ -8,7 +8,7 @@ export const API_CONFIG = {
     TEST_SUBMISSION: '/api/test-submission',
     MOOD_GROOVE: '/api/mood-groove',
     BREATHING_EXERCISE: '/api/breathing-exercise',
-    DASHBOARD: '/api/dashboard',
+
     COMPREHENSIVE_ASSESSMENT: '/api/comprehensive-assessment',
   }
 };

@@ -490,7 +490,7 @@ export default function AssessmentSessionClientPage() {
                               <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
                               <div>
                                 <p className="text-blue-200 font-medium">Track Progress</p>
-                                <p className="text-blue-300 text-sm">View your results in the dashboard and retake assessments to monitor progress.</p>
+                                <p className="text-blue-300 text-sm">View your results in your profile and retake assessments to monitor progress.</p>
                               </div>
                             </div>
                           </div>
@@ -532,10 +532,10 @@ export default function AssessmentSessionClientPage() {
 
           {currentStepIndex === steps.length - 1 ? (
             <Button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/profile')}
               className="bg-emerald-500 hover:bg-emerald-600 flex items-center gap-2"
             >
-              View Dashboard
+              View Profile
               <ArrowRight className="w-4 h-4" />
             </Button>
           ) : (
