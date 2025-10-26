@@ -26,7 +26,7 @@ const nextConfig = {
     unoptimized: true,
   },
   experimental: {
-    esmExternals: false,
+    esmExternals: 'loose',
   },
 }
 
