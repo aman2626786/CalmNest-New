@@ -2,9 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
-// Fallback implementations for production builds
-const supabase = null;
-const isSupabaseAvailable = () => false;
+import { supabase, isSupabaseAvailable } from '@/lib/supabase/client';
 
 const localAuth = {
   signUp: async (email: string, password: string, userData?: any) => {
@@ -65,7 +63,19 @@ const localAuth = {
     }
   },
   
-  isLocalAuth: () => true
+  isLocalAuth: () => true,
+  
+  setAuthCookie: () => {
+    if (typeof document !== 'undefined') {
+      document.cookie = 'auth=true; path=/; max-age=86400';
+    }
+  },
+  
+  clearAuthCookie: () => {
+    if (typeof document !== 'undefined') {
+      document.cookie = 'auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
+  }
 };
 
 interface AuthContextType {
@@ -227,14 +237,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('Using local auth for signin');
         const result = await localAuth.signIn(email, password);
         
+        if (result.error) {
+          return result;
+        }
+        
+        // Get user from localStorage
+        const localUser = localAuth.getCurrentUser();
+        
         // Create mock user object
         const mockUser = {
-          id: result.user.id,
-          email: result.user.email,
+          id: localUser.id,
+          email: localUser.email,
           user_metadata: {
-            full_name: result.user.full_name,
-            age: result.user.age,
-            gender: result.user.gender
+            full_name: localUser.full_name,
+            age: localUser.age,
+            gender: localUser.gender
           }
         } as User;
         
@@ -307,17 +324,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
+      if (isSupabaseAvailable() && supabase) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`
+        });
 
-      if (error) {
-        console.error('Reset password error:', error);
-        return { error };
+        if (error) {
+          console.error('Reset password error:', error);
+          return { error };
+        }
+
+        console.log('Reset password email sent');
+        return { error: null };
+      } else {
+        // Local auth fallback - just return success
+        console.log('Reset password (local auth fallback)');
+        return { error: null };
       }
-
-      console.log('Reset password email sent');
-      return { error: null };
     } catch (error) {
       console.error('Reset password exception:', error);
       return { error: error as AuthError };
