@@ -193,7 +193,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           password,
           options: {
-            data: userData || {}
+            data: userData || {},
+            emailRedirectTo: `${window.location.origin}/auth/callback`
           }
         });
 
@@ -326,7 +327,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (isSupabaseAvailable() && supabase) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`
+          redirectTo: `${window.location.origin}/auth/callback`
         });
 
         if (error) {
