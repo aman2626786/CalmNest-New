@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
+import { API_CONFIG } from '@/config/api';
 
 export default function NewForumPostPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function NewForumPostPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:5001/api/forum', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/forum`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

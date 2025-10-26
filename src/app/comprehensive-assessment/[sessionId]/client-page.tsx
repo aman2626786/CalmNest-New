@@ -26,6 +26,7 @@ import GAD7Component from '@/components/assessment/GAD7Component';
 import MoodGroveComponent from '@/components/assessment/MoodGroveComponent';
 import AdditionalAssessmentsComponent from '@/components/assessment/AdditionalAssessmentsComponent';
 import { generateComprehensiveAnalysis } from '@/utils/analysisGenerator';
+import { API_CONFIG } from '@/config/api';
 
 interface AssessmentData {
   assessment: {
@@ -88,7 +89,7 @@ export default function AssessmentSessionClientPage() {
       
       // First, try to get existing assessment from database
       try {
-        const response = await fetch(`http://localhost:5001/api/comprehensive-assessment/${sessionId}`);
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}`);
         
         if (response.ok) {
           const data = await response.json();
@@ -108,7 +109,7 @@ export default function AssessmentSessionClientPage() {
       
       // Create new assessment in database
       try {
-        const createResponse = await fetch('http://localhost:5001/api/comprehensive-assessment', {
+        const createResponse = await fetch(`${API_CONFIG.BASE_URL}/api/comprehensive-assessment`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -124,7 +125,7 @@ export default function AssessmentSessionClientPage() {
           console.log('Created new assessment:', createData);
           
           // Now fetch the created assessment
-          const fetchResponse = await fetch(`http://localhost:5001/api/comprehensive-assessment/${sessionId}`);
+          const fetchResponse = await fetch(`${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}`);
           if (fetchResponse.ok) {
             const assessmentData = await fetchResponse.json();
             setAssessmentData(assessmentData);
@@ -193,7 +194,7 @@ export default function AssessmentSessionClientPage() {
         
         // Save step update to database
         try {
-          const response = await fetch(`http://localhost:5001/api/comprehensive-assessment/${sessionId}/step`, {
+          const response = await fetch(`${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/step`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -250,7 +251,7 @@ export default function AssessmentSessionClientPage() {
       
       switch (stepId) {
         case 'phq9':
-          endpoint = `http://localhost:5001/api/comprehensive-assessment/${sessionId}/phq9`;
+          endpoint = `${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/phq9`;
           payload = {
             score: data.score,
             severity: data.severity,
@@ -259,7 +260,7 @@ export default function AssessmentSessionClientPage() {
           break;
           
         case 'gad7':
-          endpoint = `http://localhost:5001/api/comprehensive-assessment/${sessionId}/gad7`;
+          endpoint = `${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/gad7`;
           payload = {
             score: data.score,
             severity: data.severity,
@@ -268,7 +269,7 @@ export default function AssessmentSessionClientPage() {
           break;
           
         case 'moodGrove':
-          endpoint = `http://localhost:5001/api/comprehensive-assessment/${sessionId}/mood-groove`;
+          endpoint = `${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/mood-groove`;
           payload = {
             dominantMood: data.dominantMood,
             confidence: data.confidence,
@@ -279,7 +280,7 @@ export default function AssessmentSessionClientPage() {
           break;
           
         case 'additional':
-          endpoint = `http://localhost:5001/api/comprehensive-assessment/${sessionId}/additional`;
+          endpoint = `${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/additional`;
           payload = data;
           break;
       }
@@ -318,7 +319,7 @@ export default function AssessmentSessionClientPage() {
       
       // Save completion to database
       try {
-        const completeResponse = await fetch(`http://localhost:5001/api/comprehensive-assessment/${sessionId}/complete`, {
+        const completeResponse = await fetch(`${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/complete`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

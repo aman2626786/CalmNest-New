@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { API_CONFIG } from '@/config/api';
 import {
   LineChart,
   Line,
@@ -160,8 +161,7 @@ export default function DashboardPage() {
         };
       });
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-      const response = await fetch(`${apiUrl}/api/dashboard/${email}`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/dashboard/${email}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch dashboard data: ${response.status} ${response.statusText}`);

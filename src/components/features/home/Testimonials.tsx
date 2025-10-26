@@ -8,6 +8,7 @@ import { Feedback } from '@/types/index';
 import { Star, Quote, RefreshCw, MessageSquare, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { API_CONFIG } from '@/config/api';
 import Link from 'next/link';
 
 export const Testimonials = () => {
@@ -19,7 +20,7 @@ export const Testimonials = () => {
     const fetchFeedback = async () => {
       try {
         console.log('Fetching testimonials...');
-        const response = await fetch('http://127.0.0.1:5001/api/feedback');
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/feedback`);
         
         if (response.ok) {
           const feedback = await response.json();

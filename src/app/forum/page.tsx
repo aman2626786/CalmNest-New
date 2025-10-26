@@ -11,6 +11,7 @@ import { getForumPosts } from "@/app/actions";
 import { ForumPost } from "@/types/index";
 import { useTranslation } from 'react-i18next';
 import { FAQ } from '@/components/common/FAQ';
+import { API_CONFIG } from '@/config/api';
 
 export default function ForumPage() {
   const { t } = useTranslation('forum');
@@ -24,7 +25,7 @@ export default function ForumPage() {
         console.log('Fetching forum posts...');
         
         // Direct API call instead of using actions
-        const response = await fetch('http://127.0.0.1:5001/api/forum');
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/forum`);
         console.log('Forum API response status:', response.status);
         
         if (response.ok) {

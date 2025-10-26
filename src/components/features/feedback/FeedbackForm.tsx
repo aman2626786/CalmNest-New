@@ -8,6 +8,7 @@ import { Star, Loader2, CheckCircle } from 'lucide-react';
 import { useUserProfile } from '@/context/UserProfileContext';
 
 import { Button } from '@/components/ui/button';
+import { API_CONFIG } from '@/config/api';
 import {
   Form,
   FormControl,
@@ -87,7 +88,7 @@ Submitted by: ${displayName}`,
           recommend: values.recommend
         };
 
-        const response = await fetch('http://127.0.0.1:5001/api/feedback', {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/feedback`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
