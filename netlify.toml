@@ -1,10 +1,10 @@
 [build]
   publish = ".next"
-  command = "npm ci && npm run build"
+  command = "npm ci --no-optional && npm run build"
   functions = "netlify/functions"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   NODE_ENV = "production"
   DATABASE_URL = "postgresql://postgres:%2A13579%2ASharma@db.lrvmsulryjwgrqwniltm.supabase.co:5432/postgres"
 
