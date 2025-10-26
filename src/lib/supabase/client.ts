@@ -40,6 +40,9 @@ const hasRealCredentials = config.isValid &&
                           supabaseAnonKey && 
                           supabaseUrl.includes('.supabase.co')
 
+// Temporary fallback to local auth if Supabase not available
+const forceLocalAuth = !hasRealCredentials
+
 // Create Supabase client
 export const supabase = hasRealCredentials 
   ? createClient(supabaseUrl!, supabaseAnonKey!, {
@@ -58,7 +61,7 @@ export const supabase = hasRealCredentials
   : createClient('https://dummy.supabase.co', 'dummy-key') // Dummy client - will fail
 
 // Export helper to check if Supabase is available
-export const isSupabaseAvailable = () => hasRealCredentials
+export const isSupabaseAvailable = () => hasRealCredentials && !forceLocalAuth
 
 // Log the status in browser
 if (typeof window !== 'undefined') {
