@@ -161,7 +161,12 @@ export default function DashboardPage() {
         };
       });
 
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/dashboard/${email}`);
+      const apiUrl = `${API_CONFIG.BASE_URL}/api/dashboard/${email}`;
+      console.log(`[Dashboard] API URL: ${apiUrl}`);
+      console.log(`[Dashboard] BASE_URL: ${API_CONFIG.BASE_URL}`);
+      console.log(`[Dashboard] NEXT_PUBLIC_API_URL: ${process.env.NEXT_PUBLIC_API_URL}`);
+      
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch dashboard data: ${response.status} ${response.statusText}`);
