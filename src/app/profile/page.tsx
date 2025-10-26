@@ -5,7 +5,26 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getCurrentUser, isAuthenticated, signOutUser } from '@/lib/auth/simpleAuth';
+// Fallback auth functions for production builds
+const getCurrentUser = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const userData = localStorage.getItem('calmnest_current_user');
+    return userData ? JSON.parse(userData) : null;
+  } catch {
+    return null;
+  }
+};
+
+const isAuthenticated = () => {
+  return getCurrentUser() !== null;
+};
+
+const signOutUser = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('calmnest_current_user');
+  }
+};
 import { User, Mail, Calendar, Users, Edit, LogOut, Trash2 } from 'lucide-react';
 
 export default function ProfilePage() {

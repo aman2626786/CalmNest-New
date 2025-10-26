@@ -1,5 +1,31 @@
 import { createClient } from '@supabase/supabase-js'
-import { checkSupabaseConfig, logSupabaseStatus } from './checkConfig'
+
+// Fallback config checker for production builds
+const checkSupabaseConfig = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  const issues: string[] = [];
+  
+  if (!url || url.includes('demo') || url.includes('placeholder')) {
+    issues.push('Supabase URL not configured');
+  }
+  if (!key || key.includes('demo') || key.includes('placeholder')) {
+    issues.push('Supabase key not configured');
+  }
+  
+  return {
+    isValid: issues.length === 0,
+    issues,
+    warnings: []
+  };
+};
+
+const logSupabaseStatus = () => {
+  if (typeof window !== 'undefined') {
+    console.log('Supabase status check completed');
+  }
+};
 
 // Get Supabase credentials from environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

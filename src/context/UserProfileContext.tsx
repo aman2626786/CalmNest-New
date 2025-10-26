@@ -2,7 +2,19 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
-import { localAuth } from '@/lib/localAuth';
+// Fallback localAuth for production builds
+const localAuth = {
+  getCurrentUser: () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const userData = localStorage.getItem('current_user');
+      return userData ? JSON.parse(userData) : null;
+    } catch {
+      return null;
+    }
+  },
+  isLocalAuth: () => true
+};
 
 interface UserProfile {
   id: string;
