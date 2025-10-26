@@ -202,11 +202,20 @@ export default function DashboardPage() {
       return;
     }
     
-    const email = user?.email || 
-                  (typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null) ||
-                  'aman2626786@gmail.com'; // Fallback for testing
+    const email = user?.email;
     
     console.log(`[Dashboard] Effect triggered - Auth: ${authLoading ? 'loading' : 'ready'}, Email: ${email}, Status: ${dashboardState.status}`);
+    
+    // If no user is logged in, show error instead of redirect to avoid loops
+    if (!user && !email) {
+      console.log('[Dashboard] No user found, setting error state');
+      setDashboardState(prev => ({
+        ...prev,
+        status: 'error',
+        error: 'Please log in to view your dashboard'
+      }));
+      return;
+    }
     
     // Only fetch data if we haven't fetched it yet and we're not already loading
     if (dashboardState.status === 'idle' && email) {
@@ -214,10 +223,21 @@ export default function DashboardPage() {
       fetchDashboardData(email);
     } else if (dashboardState.status !== 'idle') {
       console.log(`[Dashboard] Skipping fetch - status is ${dashboardState.status}`);
-    } else if (!email) {
-      console.log(`[Dashboard] Skipping fetch - no email available`);
     }
-  }, [authLoading, user?.email, dashboardState.status, fetchDashboardData]);
+  }, [authLoading, user?.email, dashboardState.status, fetchDashboardData, router]);
+
+  // Reset dashboard state when user changes
+  useEffect(() => {
+    if (!authLoading && user?.email) {
+      console.log(`[Dashboard] User changed to: ${user.email}, resetting dashboard state`);
+      setDashboardState({
+        data: null,
+        status: 'idle',
+        error: null,
+        lastFetchTime: null,
+      });
+    }
+  }, [user?.email, authLoading]);
 
   useEffect(() => {
     const handleDownload = () => {
@@ -239,6 +259,30 @@ export default function DashboardPage() {
       type: test.test_type,
       severity: test.severity,
     }));
+  };
+
+  const processPHQ9Data = () => {
+    if (!dashboardState.data?.test_submissions) return [];
+    
+    return dashboardState.data.test_submissions
+      .filter((test: any) => test.test_type === 'PHQ-9')
+      .map((test: any) => ({
+        date: format(new Date(test.timestamp), 'MM/dd/yyyy'),
+        score: test.score,
+        severity: test.severity,
+      }));
+  };
+
+  const processGAD7Data = () => {
+    if (!dashboardState.data?.test_submissions) return [];
+    
+    return dashboardState.data.test_submissions
+      .filter((test: any) => test.test_type === 'GAD-7')
+      .map((test: any) => ({
+        date: format(new Date(test.timestamp), 'MM/dd/yyyy'),
+        score: test.score,
+        severity: test.severity,
+      }));
   };
 
   const processMoodGrooveData = () => {
@@ -284,9 +328,7 @@ export default function DashboardPage() {
   };
 
   const handleRetry = () => {
-    const email = user?.email || 
-                  (typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null) ||
-                  'aman2626786@gmail.com';
+    const email = user?.email;
     
     console.log(`[Dashboard] Manual retry triggered for email: ${email}`);
     
@@ -320,9 +362,17 @@ export default function DashboardPage() {
         <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
           <div className="text-red-500 text-xl font-semibold">Error Loading Dashboard</div>
           <div className="text-gray-600 text-center max-w-md">{dashboardState.error}</div>
-          <Button onClick={handleRetry} className="mt-4">
-            Try Again
-          </Button>
+          <div className="flex gap-4">
+            {dashboardState.error?.includes('log in') ? (
+              <Button onClick={() => router.push('/login')} className="mt-4">
+                Go to Login
+              </Button>
+            ) : (
+              <Button onClick={handleRetry} className="mt-4">
+                Try Again
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -387,6 +437,56 @@ export default function DashboardPage() {
                   {dashboardState.data?.comprehensive_assessments_count || 0}
                 </p>
                 <p className="text-sm text-gray-500">{t('cards.totalAssessments')}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 mt-6 md:grid-cols-1 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>PHQ-9 Depression Scores</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {processPHQ9Data().length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={processPHQ9Data().slice(-10)}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis domain={[0, 27]} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="score" stroke="#8884d8" name="PHQ-9 Score" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-gray-500">
+                    No PHQ-9 test data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>GAD-7 Anxiety Scores</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {processGAD7Data().length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={processGAD7Data().slice(-10)}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis domain={[0, 21]} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="score" stroke="#82ca9d" name="GAD-7 Score" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-gray-500">
+                    No GAD-7 test data available
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

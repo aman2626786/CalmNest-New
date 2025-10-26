@@ -42,6 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             setSession(session);
             setUser(session?.user ?? null);
+            
+            // Clear any old localStorage data to prevent conflicts
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('userEmail');
+            }
+            
             setLoading(false);
           }
         );
@@ -167,6 +173,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('Sign out error:', error);
           return { error };
         }
+        
+        // Clear user state
+        setUser(null);
+        setSession(null);
       } else {
         // Use local auth fallback
         localAuth.signOut();
@@ -175,6 +185,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Clear auth cookie
         localAuth.clearAuthCookie();
+      }
+
+      // Clear any localStorage data
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('current_user');
       }
 
       console.log('Sign out successful');

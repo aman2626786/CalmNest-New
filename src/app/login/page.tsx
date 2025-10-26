@@ -36,17 +36,13 @@ export default function LoginPage() {
     
     // Redirect if user is already logged in
     if (!loading && user) {
-      const timer = setTimeout(() => {
-        if (redirectTo) {
-          console.log('Login: Redirecting to:', redirectTo);
-          router.push(decodeURIComponent(redirectTo));
-        } else {
-          console.log('Login: No redirectTo, going to profile-setup');
-          router.push('/profile-setup');
-        }
-      }, 1000); // Give a short delay to show the message
-
-      return () => clearTimeout(timer);
+      if (redirectTo) {
+        console.log('Login: Redirecting to:', redirectTo);
+        router.push(decodeURIComponent(redirectTo));
+      } else {
+        console.log('Login: No redirectTo, going to homepage');
+        router.push('/');
+      }
     }
   }, [user, loading, router]);
 
@@ -93,6 +89,11 @@ export default function LoginPage() {
       setMessage(error.message);
       setMessageType('error');
     } else {
+      // Clear any old localStorage data
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('userEmail');
+      }
+      
       setMessageType('success');
       setMessage('Sign in successful! Redirecting...');
       setTimeout(() => router.push('/'), 500);

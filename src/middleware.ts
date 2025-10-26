@@ -6,9 +6,9 @@ import type { NextRequest } from 'next/server';
 const protectedRoutes = [
   '/profile',
   '/profile-setup',
+  // '/dashboard', // Handled by component-level auth check
   '/comprehensive-assessment',
   '/forum/new',
-  // '/dashboard', // Temporarily disabled to fix redirect loop
 ];
 
 // Public routes that don't require authentication
