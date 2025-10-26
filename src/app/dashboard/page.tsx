@@ -265,7 +265,10 @@ export default function DashboardPage() {
     if (!dashboardState.data?.test_submissions) return [];
     
     return dashboardState.data.test_submissions
-      .filter((test: any) => test.test_type === 'PHQ-9')
+      .filter((test: any) => {
+        const testType = test.test_type?.toUpperCase();
+        return testType === 'PHQ9';
+      })
       .map((test: any) => ({
         date: format(new Date(test.timestamp), 'MM/dd/yyyy'),
         score: test.score,
@@ -277,7 +280,10 @@ export default function DashboardPage() {
     if (!dashboardState.data?.test_submissions) return [];
     
     return dashboardState.data.test_submissions
-      .filter((test: any) => test.test_type === 'GAD-7')
+      .filter((test: any) => {
+        const testType = test.test_type?.toUpperCase();
+        return testType === 'GAD7';
+      })
       .map((test: any) => ({
         date: format(new Date(test.timestamp), 'MM/dd/yyyy'),
         score: test.score,

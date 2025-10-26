@@ -7,7 +7,7 @@ const protectedRoutes = [
   '/profile',
   '/profile-setup',
   // '/dashboard', // Handled by component-level auth check
-  '/comprehensive-assessment',
+  // '/comprehensive-assessment', // Temporarily disable middleware auth for testing
   '/forum/new',
 ];
 
@@ -37,7 +37,12 @@ function isLocalAuth() {
 function checkLocalAuth(req: NextRequest) {
   // In local auth mode, we'll check for a simple auth cookie
   const authCookie = req.cookies.get('local_auth');
-  return authCookie?.value === 'authenticated';
+  const userEmailCookie = req.cookies.get('userEmail');
+  
+  console.log('Middleware: Auth cookie:', authCookie?.value);
+  console.log('Middleware: User email cookie:', userEmailCookie?.value);
+  
+  return authCookie?.value === 'authenticated' || !!userEmailCookie?.value;
 }
 
 export async function middleware(req: NextRequest) {

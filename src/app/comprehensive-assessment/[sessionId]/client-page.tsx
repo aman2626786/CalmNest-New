@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,7 +55,7 @@ const steps = [
 export default function AssessmentSessionClientPage() {
   const params = useParams();
   const router = useRouter();
-  const session = useSession();
+  const { user, loading: authLoading } = useAuth();
   const sessionId = params.sessionId as string;
   
   const [assessmentData, setAssessmentData] = useState<AssessmentData | null>(null);
@@ -66,31 +66,103 @@ export default function AssessmentSessionClientPage() {
   const [isCompleting, setIsCompleting] = useState(false);
 
   useEffect(() => {
-    if (!session?.user?.id) {
-      router.push('/login?redirect=/comprehensive-assessment');
+    const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
+    
+    if (!authLoading && !user?.id && !storedEmail) {
+      router.push('/login?redirectTo=' + encodeURIComponent('/comprehensive-assessment'));
       return;
     }
-    fetchAssessmentData();
-  }, [session, sessionId]);
+    
+    // Proceed with assessment if we have user or stored email
+    if (user?.id || storedEmail) {
+      fetchAssessmentData();
+    }
+  }, [user, authLoading, sessionId]);
 
   const fetchAssessmentData = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:5001/api/comprehensive-assessment/${sessionId}`);
+      console.log('Initializing assessment session:', sessionId);
       
-      if (response.ok) {
-        const data = await response.json();
-        setAssessmentData(data);
+      const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
+      const userId = user?.id || storedEmail || 'temp_user';
+      
+      // First, try to get existing assessment from database
+      try {
+        const response = await fetch(`http://localhost:5001/api/comprehensive-assessment/${sessionId}`);
         
-        const stepIndex = steps.findIndex(step => step.id === data.session.current_step);
-        setCurrentStepIndex(stepIndex >= 0 ? stepIndex : 0);
-      } else {
-        console.error('Failed to fetch assessment data');
-        alert('Failed to load assessment. Redirecting to start page.');
-        router.push('/comprehensive-assessment');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Found existing assessment:', data);
+          setAssessmentData(data);
+          
+          // Set current step based on saved data
+          const stepIndex = steps.findIndex(step => step.id === data.session.current_step);
+          setCurrentStepIndex(stepIndex >= 0 ? stepIndex : 0);
+          
+          console.log('Loaded existing assessment session');
+          return;
+        }
+      } catch (error) {
+        console.log('No existing assessment found, creating new one');
       }
+      
+      // Create new assessment in database
+      try {
+        const createResponse = await fetch('http://localhost:5001/api/comprehensive-assessment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userId,
+            sessionId: sessionId
+          })
+        });
+        
+        if (createResponse.ok) {
+          const createData = await createResponse.json();
+          console.log('Created new assessment:', createData);
+          
+          // Now fetch the created assessment
+          const fetchResponse = await fetch(`http://localhost:5001/api/comprehensive-assessment/${sessionId}`);
+          if (fetchResponse.ok) {
+            const assessmentData = await fetchResponse.json();
+            setAssessmentData(assessmentData);
+            setCurrentStepIndex(0);
+            console.log('Assessment session created and loaded successfully');
+          }
+        } else {
+          throw new Error('Failed to create assessment');
+        }
+      } catch (dbError) {
+        console.error('Database error, falling back to local storage:', dbError);
+        
+        // Fallback to mock data if database fails
+        const mockData: AssessmentData = {
+          assessment: {
+            id: 1,
+            session_id: sessionId,
+            user_id: userId,
+            status: 'in_progress',
+            started_at: new Date().toISOString(),
+            completed_at: null
+          },
+          session: {
+            current_step: 'introduction',
+            session_data: {},
+            last_activity: new Date().toISOString()
+          }
+        };
+        
+        setAssessmentData(mockData);
+        setCurrentStepIndex(0);
+        console.log('Using fallback mock data');
+      }
+      
     } catch (error) {
-      console.error('Error fetching assessment data:', error);
-      alert('Network error. Please check your connection.');
+      console.error('Error initializing assessment:', error);
+      alert('Error initializing assessment. Please try again.');
+      router.push('/comprehensive-assessment');
     } finally {
       setLoading(false);
     }
@@ -98,28 +170,51 @@ export default function AssessmentSessionClientPage() {
 
   const updateStep = async (newStep: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:5001/api/comprehensive-assessment/${sessionId}/step`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          current_step: newStep,
-          session_data: {
-            ...assessmentData?.session.session_data,
-            steps_completed: [...(assessmentData?.session.session_data?.steps_completed || []), steps[currentStepIndex].id]
-          }
-        }),
-      });
-
-      if (response.ok) {
-        const newStepIndex = steps.findIndex(step => step.id === newStep);
-        setCurrentStepIndex(newStepIndex);
+      console.log('Updating step to:', newStep);
+      
+      const newStepIndex = steps.findIndex(step => step.id === newStep);
+      setCurrentStepIndex(newStepIndex);
+      
+      if (assessmentData) {
+        const updatedSessionData = {
+          ...assessmentData.session.session_data,
+          steps_completed: [...(assessmentData.session.session_data?.steps_completed || []), steps[currentStepIndex].id]
+        };
         
-        if (assessmentData) {
-          setAssessmentData({
-            ...assessmentData,
-            session: { ...assessmentData.session, current_step: newStep }
+        const updatedData = {
+          ...assessmentData,
+          session: { 
+            ...assessmentData.session, 
+            current_step: newStep,
+            session_data: updatedSessionData
+          }
+        };
+        setAssessmentData(updatedData);
+        
+        // Save step update to database
+        try {
+          const response = await fetch(`http://localhost:5001/api/comprehensive-assessment/${sessionId}/step`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              current_step: newStep,
+              session_data: updatedSessionData
+            })
           });
+          
+          if (response.ok) {
+            console.log('Step updated in database successfully');
+          } else {
+            console.error('Failed to update step in database:', await response.text());
+          }
+        } catch (dbError) {
+          console.error('Database error while updating step:', dbError);
         }
+        
+        // Save to localStorage as backup
+        localStorage.setItem(`assessment_${sessionId}`, JSON.stringify(updatedData));
       }
     } catch (error) {
       console.error('Error updating step:', error);
@@ -140,8 +235,73 @@ export default function AssessmentSessionClientPage() {
     }
   };
 
-  const handleAssessmentComplete = (stepId: string, data: any) => {
+  const handleAssessmentComplete = async (stepId: string, data: any) => {
     setAssessmentResults(prev => ({ ...prev, [stepId]: data }));
+    
+    // Save to database immediately
+    try {
+      const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
+      const userId = user?.id || storedEmail || 'temp_user';
+      
+      console.log(`Saving ${stepId} results to database:`, data);
+      
+      let endpoint = '';
+      let payload = {};
+      
+      switch (stepId) {
+        case 'phq9':
+          endpoint = `http://localhost:5001/api/comprehensive-assessment/${sessionId}/phq9`;
+          payload = {
+            score: data.score,
+            severity: data.severity,
+            answers: data.answers
+          };
+          break;
+          
+        case 'gad7':
+          endpoint = `http://localhost:5001/api/comprehensive-assessment/${sessionId}/gad7`;
+          payload = {
+            score: data.score,
+            severity: data.severity,
+            answers: data.answers
+          };
+          break;
+          
+        case 'moodGrove':
+          endpoint = `http://localhost:5001/api/comprehensive-assessment/${sessionId}/mood-groove`;
+          payload = {
+            dominantMood: data.dominantMood,
+            confidence: data.confidence,
+            depression: data.depression,
+            anxiety: data.anxiety,
+            expressions: data.expressions
+          };
+          break;
+          
+        case 'additional':
+          endpoint = `http://localhost:5001/api/comprehensive-assessment/${sessionId}/additional`;
+          payload = data;
+          break;
+      }
+      
+      if (endpoint) {
+        const response = await fetch(endpoint, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        if (response.ok) {
+          console.log(`${stepId} results saved to database successfully`);
+        } else {
+          console.error(`Failed to save ${stepId} results:`, await response.text());
+        }
+      }
+    } catch (error) {
+      console.error(`Error saving ${stepId} results:`, error);
+    }
   };
 
   const handleComplete = async () => {
@@ -156,63 +316,49 @@ export default function AssessmentSessionClientPage() {
       
       setFinalAnalysis(analysis);
       
-      // Save results to database
-      const savePromises = [];
-      
-      if (assessmentResults.phq9) {
-        savePromises.push(
-          fetch(`http://127.0.0.1:5001/api/comprehensive-assessment/${sessionId}/phq9`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(assessmentResults.phq9),
+      // Save completion to database
+      try {
+        const completeResponse = await fetch(`http://localhost:5001/api/comprehensive-assessment/${sessionId}/complete`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            overall_severity: analysis.overall_severity,
+            risk_level: analysis.risk_level,
+            analysis_prompt: analysis.analysis_prompt,
+            recommendations: analysis.recommendations
           })
-        );
+        });
+        
+        if (completeResponse.ok) {
+          console.log('Assessment completed and saved to database');
+        } else {
+          console.error('Failed to save completion to database:', await completeResponse.text());
+        }
+      } catch (dbError) {
+        console.error('Database error while completing assessment:', dbError);
       }
       
-      if (assessmentResults.gad7) {
-        savePromises.push(
-          fetch(`http://127.0.0.1:5001/api/comprehensive-assessment/${sessionId}/gad7`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(assessmentResults.gad7),
-          })
-        );
-      }
+      // Also save to localStorage as backup
+      const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
+      const completedAssessment = {
+        sessionId,
+        userId: user?.id || storedEmail || 'temp_user',
+        completedAt: new Date().toISOString(),
+        results: assessmentResults,
+        analysis: analysis
+      };
       
-      if (assessmentResults.moodGrove) {
-        savePromises.push(
-          fetch(`http://127.0.0.1:5001/api/comprehensive-assessment/${sessionId}/mood-groove`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(assessmentResults.moodGrove),
-          })
-        );
-      }
+      localStorage.setItem(`completed_assessment_${sessionId}`, JSON.stringify(completedAssessment));
+      localStorage.setItem('latest_assessment', JSON.stringify(completedAssessment));
       
-      if (assessmentResults.additional) {
-        savePromises.push(
-          fetch(`http://127.0.0.1:5001/api/comprehensive-assessment/${sessionId}/additional`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(assessmentResults.additional),
-          })
-        );
-      }
+      console.log('Assessment completed and saved locally as backup');
       
-      await Promise.all(savePromises);
+      // Move to results step
+      setCurrentStepIndex(steps.length - 1);
+      updateStep('results');
       
-      const response = await fetch(`http://127.0.0.1:5001/api/comprehensive-assessment/${sessionId}/complete`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(analysis),
-      });
-
-      if (response.ok) {
-        setCurrentStepIndex(steps.length - 1);
-        updateStep('results');
-      } else {
-        throw new Error('Failed to complete assessment');
-      }
     } catch (error) {
       console.error('Error completing assessment:', error);
       alert('Error completing assessment. Please try again.');
@@ -242,12 +388,25 @@ export default function AssessmentSessionClientPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
           <p className="text-gray-300">Loading assessment...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
+  
+  if (!user && !storedEmail) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+          <p className="text-gray-300">Redirecting to login...</p>
         </div>
       </div>
     );
@@ -532,10 +691,10 @@ export default function AssessmentSessionClientPage() {
 
           {currentStepIndex === steps.length - 1 ? (
             <Button
-              onClick={() => router.push('/profile')}
+              onClick={() => router.push('/dashboard')}
               className="bg-emerald-500 hover:bg-emerald-600 flex items-center gap-2"
             >
-              View Profile
+              View Dashboard
               <ArrowRight className="w-4 h-4" />
             </Button>
           ) : (

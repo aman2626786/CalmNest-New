@@ -1,185 +1,134 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Brain, Loader2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Brain, CheckCircle } from 'lucide-react';
 
 interface PHQ9ComponentProps {
   onComplete: (data: { score: number; severity: string; answers: any[] }) => void;
   onNext: () => void;
 }
 
-const getSeverity = (score: number, t: any): string => {
-  if (score <= 4) return t('severityLevels.none_minimal', 'None-Minimal');
-  if (score <= 9) return t('severityLevels.mild', 'Mild');
-  if (score <= 14) return t('severityLevels.moderate', 'Moderate');
-  if (score <= 19) return t('severityLevels.moderately_severe', 'Moderately Severe');
-  return t('severityLevels.severe', 'Severe');
+const phq9Questions = [
+  { id: 'phq9-1', text: 'Little interest or pleasure in doing things' },
+  { id: 'phq9-2', text: 'Feeling down, depressed, or hopeless' },
+  { id: 'phq9-3', text: 'Trouble falling or staying asleep, or sleeping too much' },
+  { id: 'phq9-4', text: 'Feeling tired or having little energy' },
+  { id: 'phq9-5', text: 'Poor appetite or overeating' },
+  { id: 'phq9-6', text: 'Feeling bad about yourself or that you are a failure or have let yourself or your family down' },
+  { id: 'phq9-7', text: 'Trouble concentrating on things, such as reading the newspaper or watching television' },
+  { id: 'phq9-8', text: 'Moving or speaking so slowly that other people could have noticed, or the opposite being so fidgety or restless that you have been moving around a lot more than usual' },
+  { id: 'phq9-9', text: 'Thoughts that you would be better off dead, or of hurting yourself' }
+];
+
+const responseOptions = [
+  { value: '0', label: 'Not at all' },
+  { value: '1', label: 'Several days' },
+  { value: '2', label: 'More than half the days' },
+  { value: '3', label: 'Nearly every day' }
+];
+
+const getSeverity = (score: number): string => {
+  if (score <= 4) return 'None-Minimal';
+  if (score <= 9) return 'Mild';
+  if (score <= 14) return 'Moderate';
+  if (score <= 19) return 'Moderately Severe';
+  return 'Severe';
 };
 
 export default function PHQ9Component({ onComplete, onNext }: PHQ9ComponentProps) {
-  const { t, i18n } = useTranslation('phq9');
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isReady, setIsReady] = useState(false);
 
-  // Get questions and options from translation
-  const questions = useMemo(() => {
-    if (!isReady) return [];
-    const questionData = t('questions', { returnObjects: true });
-    return Array.isArray(questionData) ? questionData : [];
-  }, [t, isReady]);
-
-  const options = useMemo(() => {
-    if (!isReady) return {};
-    return t('options', { returnObjects: true });
-  }, [t, isReady]);
-
-  useEffect(() => {
-    if (i18n.isInitialized && i18n.hasResourceBundle(i18n.language, 'phq9')) {
-      setIsReady(true);
-    }
-  }, [i18n.isInitialized, i18n.language, i18n]);
-
-  const formSchema = useMemo(() => {
-    if (questions.length === 0) {
-      return z.object({});
-    }
-    const schemaShape = Object.fromEntries(
-      questions.map((q: any) => [q.id, z.string().nonempty('Please select an answer.')])
-    );
-    return z.object(schemaShape);
-  }, [questions]);
-
-  type FormValues = z.infer<typeof formSchema>;
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {},
-  });
-
-  const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true);
-    
-    try {
-      const answers = Object.entries(data).map(([key, value]) => {
-        const question = questions.find((q: any) => q.id === key);
-        const option = options[value as keyof typeof options];
-        return {
-          question: question ? question.text : '',
-          option: option || '',
-          score: parseInt(value, 10),
-        };
-      });
-      
-      const score = answers.reduce((sum, answer) => sum + answer.score, 0);
-      const severity = getSeverity(score, t);
-
-      // Call the completion handler
-      onComplete({ score, severity, answers });
-      
-      // Small delay for user feedback
-      setTimeout(() => {
-        onNext();
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Error submitting PHQ-9:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleAnswerChange = (questionId: string, value: string) => {
+    setAnswers(prev => ({ ...prev, [questionId]: value }));
   };
 
-  if (!isReady || questions.length === 0) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-12 w-12 animate-spin text-purple-400" />
-      </div>
-    );
-  }
+  const handleSubmit = () => {
+    const unanswered = phq9Questions.filter(q => !answers[q.id]);
+    if (unanswered.length > 0) {
+      alert(`Please answer all questions. ${unanswered.length} questions remaining.`);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const answersArray = phq9Questions.map(question => ({
+      question: question.text,
+      option: responseOptions.find(opt => opt.value === answers[question.id])?.label || '',
+      score: parseInt(answers[question.id], 10)
+    }));
+
+    const score = answersArray.reduce((sum, answer) => sum + answer.score, 0);
+    const severity = getSeverity(score);
+
+    setTimeout(() => {
+      onComplete({ score, severity, answers: answersArray });
+      onNext();
+      setIsSubmitting(false);
+    }, 1000);
+  };
 
   return (
     <div className="space-y-6">
-      <Card className="bg-gray-800 border-gray-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3 text-white">
-            <Brain className="w-6 h-6 text-purple-400" />
-            {t('title', 'PHQ-9 Depression Screening')}
-          </CardTitle>
-          <CardDescription>
-            {t('description', 'Over the last 2 weeks, how often have you been bothered by any of the following problems?')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {questions.map((question: any, index: number) => (
-                <FormField
-                  key={question.id}
-                  control={form.control}
-                  name={question.id as any}
-                  render={({ field }) => (
-                    <FormItem className="space-y-3 p-4 rounded-lg border border-gray-600/50 bg-gray-700/30">
-                      <FormLabel className="text-base text-white font-medium">
-                        {index + 1}. {question.text}
-                      </FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex flex-col space-y-2 pt-2"
-                        >
-                          {Object.entries(options).map(([value, label]) => (
-                            <FormItem key={value} className="flex items-center space-x-3 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem 
-                                  value={value} 
-                                  id={`${field.name}-${value}`} 
-                                  className="text-purple-400 border-gray-500 focus:ring-purple-500" 
-                                />
-                              </FormControl>
-                              <FormLabel 
-                                htmlFor={`${field.name}-${value}`} 
-                                className="font-normal text-gray-300 cursor-pointer"
-                              >
-                                {label}
-                              </FormLabel>
-                            </FormItem>
-                          ))}
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage className="text-red-400" />
-                    </FormItem>
-                  )}
-                />
+      <div className="text-center">
+        <Brain className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-white mb-2">PHQ-9 Depression Screening</h3>
+        <p className="text-gray-300">
+          Over the last 2 weeks, how often have you been bothered by any of the following problems?
+        </p>
+      </div>
+
+      {phq9Questions.map((question, index) => (
+        <Card key={question.id} className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white text-base">
+              {index + 1}. {question.text}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup 
+              value={answers[question.id] || ''} 
+              onValueChange={(value) => handleAnswerChange(question.id, value)}
+            >
+              {responseOptions.map((option) => (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option.value} id={`${question.id}-${option.value}`} />
+                  <Label 
+                    htmlFor={`${question.id}-${option.value}`} 
+                    className="text-gray-300 cursor-pointer"
+                  >
+                    {option.label}
+                  </Label>
+                </div>
               ))}
-              
-              <div className="pt-6">
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting} 
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing Results...
-                    </>
-                  ) : (
-                    t('completeButton', 'Complete PHQ-9 Assessment')
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            </RadioGroup>
+          </CardContent>
+        </Card>
+      ))}
+
+      <div className="text-center">
+        <Button
+          onClick={handleSubmit}
+          disabled={phq9Questions.some(q => !answers[q.id]) || isSubmitting}
+          className="bg-emerald-500 hover:bg-emerald-600 px-8 py-3"
+        >
+          {isSubmitting ? (
+            <div className="flex items-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Processing...
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              Complete PHQ-9
+            </div>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -58,23 +58,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Use local auth fallback
         console.log('Using local auth fallback');
         const localUser = localAuth.getCurrentUser();
-        if (localUser) {
-          // Create a mock user object
-          const mockUser = {
-            id: localUser.id,
-            email: localUser.email,
-            user_metadata: {
-              full_name: localUser.full_name,
-              age: localUser.age,
-              gender: localUser.gender
-            }
-          } as User;
+        
+        // Also check localStorage for userEmail as backup
+        const userEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
+        
+        if (localUser || userEmail) {
+          let mockUser;
+          
+          if (localUser) {
+            // Create a mock user object from local auth
+            mockUser = {
+              id: localUser.id,
+              email: localUser.email,
+              user_metadata: {
+                full_name: localUser.full_name,
+                age: localUser.age,
+                gender: localUser.gender
+              }
+            } as User;
+          } else if (userEmail) {
+            // Create a mock user from stored email
+            mockUser = {
+              id: `user_${Date.now()}`,
+              email: userEmail,
+              user_metadata: {
+                full_name: 'User',
+                age: 25,
+                gender: 'not-specified'
+              }
+            } as User;
+          }
           
           setUser(mockUser);
           
           // Always set auth cookie for middleware when user exists
           console.log('AuthContext: Setting auth cookie for existing user');
           localAuth.setAuthCookie();
+          
+          // Also set email cookie for middleware
+          if (typeof document !== 'undefined') {
+            const email = localUser?.email || userEmail;
+            document.cookie = `userEmail=${email}; path=/; max-age=86400`;
+          }
         } else {
           // Clear auth cookie if no user
           console.log('AuthContext: No local user found, clearing auth cookie');
@@ -155,6 +180,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Set auth cookie for middleware
         localAuth.setAuthCookie();
         
+        // Also set email cookie for middleware
+        if (typeof document !== 'undefined') {
+          document.cookie = `userEmail=${result.user.email}; path=/; max-age=86400`;
+        }
+        
+        // Also store email in localStorage for backup
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('userEmail', result.user.email);
+        }
+        
         return { error: null };
       }
     } catch (error) {
@@ -185,6 +220,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Clear auth cookie
         localAuth.clearAuthCookie();
+        
+        // Clear email cookie
+        if (typeof document !== 'undefined') {
+          document.cookie = 'userEmail=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          localStorage.removeItem('userEmail');
+        }
       }
 
       // Clear any localStorage data

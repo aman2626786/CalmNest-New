@@ -34,14 +34,12 @@ export default function LoginPage() {
       setMessageType('error');
     }
     
-    // Redirect if user is already logged in
-    if (!loading && user) {
+    // Handle redirect for already logged in users
+    if (user && !loading) {
       if (redirectTo) {
-        console.log('Login: Redirecting to:', redirectTo);
-        router.push(decodeURIComponent(redirectTo));
+        router.replace(decodeURIComponent(redirectTo));
       } else {
-        console.log('Login: No redirectTo, going to homepage');
-        router.push('/');
+        router.replace('/');
       }
     }
   }, [user, loading, router]);
@@ -108,11 +106,15 @@ export default function LoginPage() {
     );
   }
 
-  if (user) {
+
+
+  // If user is already logged in, show loading state during redirect
+  if (user && !loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="text-white text-center">
-          <p>Already logged in. Redirecting...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-gray-300">Redirecting...</p>
         </div>
       </div>
     );

@@ -651,16 +651,24 @@ def create_comprehensive_assessment():
     """Create a new comprehensive assessment session"""
     data = request.get_json()
     
+    print(f"Creating comprehensive assessment with data: {data}")
+    
     try:
+        # Use the provided sessionId or generate one
+        session_id = data.get('sessionId', f"session_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}")
+        
         new_assessment = ComprehensiveAssessment(
+            session_id=session_id,
             user_id=data['userId']
         )
         db.session.add(new_assessment)
         db.session.commit()
         
+        print(f"Created comprehensive assessment with ID: {new_assessment.id}, Session ID: {session_id}")
+        
         # Create initial session data
         session_data = AssessmentSession(
-            session_id=new_assessment.session_id,
+            session_id=session_id,
             user_id=data['userId'],
             current_step='introduction',
             session_data={'started': True, 'steps_completed': []}
@@ -668,25 +676,33 @@ def create_comprehensive_assessment():
         db.session.add(session_data)
         db.session.commit()
         
+        print(f"Created assessment session data for session: {session_id}")
+        
         return jsonify({
             'message': 'Comprehensive assessment created successfully',
-            'session_id': new_assessment.session_id,
+            'session_id': session_id,
             'assessment_id': new_assessment.id
         }), 201
         
     except Exception as e:
         db.session.rollback()
+        print(f"Error creating comprehensive assessment: {str(e)}")
         return jsonify({'error': f'Failed to create comprehensive assessment: {str(e)}'}), 500
 
 @app.route('/api/comprehensive-assessment/<session_id>', methods=['GET'])
 def get_comprehensive_assessment(session_id):
     """Get comprehensive assessment by session ID"""
     try:
+        print(f"Fetching comprehensive assessment for session: {session_id}")
+        
         assessment = ComprehensiveAssessment.query.filter_by(session_id=session_id).first()
         if not assessment:
+            print(f"Assessment not found for session: {session_id}")
             return jsonify({'error': 'Assessment not found'}), 404
             
         session_data = AssessmentSession.query.filter_by(session_id=session_id).first()
+        
+        print(f"Found assessment: {assessment.id}, status: {assessment.status}")
         
         return jsonify({
             'assessment': {
@@ -1319,6 +1335,8 @@ def feature_feedback(feedback_id):
         db.session.commit()
         return jsonify({'message': 'Feedback featured'})
     return jsonify({'message': 'Feedback not found'}), 404
+
+
 
 
 @app.route('/dev/reset-db')

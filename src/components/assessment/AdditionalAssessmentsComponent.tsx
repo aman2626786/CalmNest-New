@@ -1,15 +1,11 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { BarChart3, Loader2, Shield, Zap, Moon, Users } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Shield, Zap, Moon, Users, CheckCircle } from 'lucide-react';
 
 interface AdditionalAssessmentsComponentProps {
   onComplete: (data: {
@@ -21,472 +17,172 @@ interface AdditionalAssessmentsComponentProps {
   onNext: () => void;
 }
 
-// Brief Resilience Scale (BRS) - 6 questions
-const resilienceQuestions = [
-  { id: "brs-1", text: "I tend to bounce back quickly after hard times" },
-  { id: "brs-2", text: "I have a hard time making it through stressful events", reverse: true },
-  { id: "brs-3", text: "It does not take me long to recover from a stressful event" },
-  { id: "brs-4", text: "It is hard for me to snap back when something bad happens", reverse: true },
-  { id: "brs-5", text: "I usually come through difficult times with little trouble" },
-  { id: "brs-6", text: "I tend to take a long time to get over set-backs in my life", reverse: true }
+// Simplified questions for quick assessment
+const assessmentQuestions = [
+  {
+    id: 'resilience',
+    title: 'Resilience',
+    icon: Shield,
+    color: 'text-green-400',
+    question: 'How well do you bounce back from difficult situations?',
+    options: [
+      { value: '1', label: 'Very poorly - I struggle to recover' },
+      { value: '2', label: 'Poorly - It takes me a long time' },
+      { value: '3', label: 'Moderately - I eventually get through it' },
+      { value: '4', label: 'Well - I recover fairly quickly' },
+      { value: '5', label: 'Very well - I bounce back quickly' }
+    ]
+  },
+  {
+    id: 'stress',
+    title: 'Stress Level',
+    icon: Zap,
+    color: 'text-yellow-400',
+    question: 'How often do you feel overwhelmed by stress in your daily life?',
+    options: [
+      { value: '1', label: 'Never - I feel very calm' },
+      { value: '2', label: 'Rarely - Only occasionally stressed' },
+      { value: '3', label: 'Sometimes - Moderate stress levels' },
+      { value: '4', label: 'Often - Frequently feel stressed' },
+      { value: '5', label: 'Always - Constantly overwhelmed' }
+    ]
+  },
+  {
+    id: 'sleep_quality',
+    title: 'Sleep Quality',
+    icon: Moon,
+    color: 'text-blue-400',
+    question: 'How would you rate your overall sleep quality?',
+    options: [
+      { value: '5', label: 'Excellent - I sleep very well' },
+      { value: '4', label: 'Good - Generally sleep well' },
+      { value: '3', label: 'Fair - Some sleep issues' },
+      { value: '2', label: 'Poor - Often have trouble sleeping' },
+      { value: '1', label: 'Very poor - Severe sleep problems' }
+    ]
+  },
+  {
+    id: 'social_support',
+    title: 'Social Support',
+    icon: Users,
+    color: 'text-purple-400',
+    question: 'How supported do you feel by friends and family?',
+    options: [
+      { value: '5', label: 'Very supported - Strong support network' },
+      { value: '4', label: 'Supported - Good friends and family' },
+      { value: '3', label: 'Moderately supported - Some support' },
+      { value: '2', label: 'Poorly supported - Limited support' },
+      { value: '1', label: 'Not supported - Feel alone' }
+    ]
+  }
 ];
-
-// Perceived Stress Scale (PSS-4) - 4 questions
-const stressQuestions = [
-  { id: "pss-1", text: "In the last month, how often have you felt that you were unable to control the important things in your life?" },
-  { id: "pss-2", text: "In the last month, how often have you felt confident about your ability to handle your personal problems?", reverse: true },
-  { id: "pss-3", text: "In the last month, how often have you felt that things were going your way?", reverse: true },
-  { id: "pss-4", text: "In the last month, how often have you felt difficulties were piling up so high that you could not overcome them?" }
-];
-
-// Sleep Quality - 3 questions
-const sleepQuestions = [
-  { id: "sleep-1", text: "During the past month, how would you rate your sleep quality overall?" },
-  { id: "sleep-2", text: "During the past month, how often have you had trouble sleeping because you cannot get to sleep within 30 minutes?" },
-  { id: "sleep-3", text: "During the past month, how often have you had trouble sleeping because you wake up in the middle of the night or early morning?" }
-];
-
-// Social Support - 3 questions
-const socialSupportQuestions = [
-  { id: "social-1", text: "There is a special person who is around when I am in need" },
-  { id: "social-2", text: "I have a special person who is a real source of comfort to me" },
-  { id: "social-3", text: "My friends really try to help me" }
-];
-
-const resilienceOptions = {
-  "1": "Strongly Disagree",
-  "2": "Disagree", 
-  "3": "Neutral",
-  "4": "Agree",
-  "5": "Strongly Agree"
-};
-
-const stressOptions = {
-  "0": "Never",
-  "1": "Almost Never",
-  "2": "Sometimes",
-  "3": "Fairly Often",
-  "4": "Very Often"
-};
-
-const sleepOptions = {
-  "0": "Very Good",
-  "1": "Fairly Good",
-  "2": "Fairly Bad",
-  "3": "Very Bad"
-};
-
-const socialOptions = {
-  "1": "Very Strongly Disagree",
-  "2": "Strongly Disagree",
-  "3": "Mildly Disagree",
-  "4": "Neutral",
-  "5": "Mildly Agree",
-  "6": "Strongly Agree",
-  "7": "Very Strongly Agree"
-};
 
 export default function AdditionalAssessmentsComponent({ onComplete, onNext }: AdditionalAssessmentsComponentProps) {
-  const { t, i18n } = useTranslation('additional-assessments');
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isReady, setIsReady] = useState(false);
 
-  // Get questions and options from translation
-  const resilienceQuestions = useMemo(() => {
-    if (!isReady) return [];
-    const questionData = t('resilience.questions', { returnObjects: true });
-    return Array.isArray(questionData) ? questionData : [];
-  }, [t, isReady]);
-
-  const stressQuestions = useMemo(() => {
-    if (!isReady) return [];
-    const questionData = t('stress.questions', { returnObjects: true });
-    return Array.isArray(questionData) ? questionData : [];
-  }, [t, isReady]);
-
-  const sleepQuestions = useMemo(() => {
-    if (!isReady) return [];
-    const questionData = t('sleep.questions', { returnObjects: true });
-    return Array.isArray(questionData) ? questionData : [];
-  }, [t, isReady]);
-
-  const socialQuestions = useMemo(() => {
-    if (!isReady) return [];
-    const questionData = t('social.questions', { returnObjects: true });
-    return Array.isArray(questionData) ? questionData : [];
-  }, [t, isReady]);
-
-  const resilienceOptions = useMemo(() => {
-    if (!isReady) return {};
-    return t('resilience.options', { returnObjects: true });
-  }, [t, isReady]);
-
-  const stressOptions = useMemo(() => {
-    if (!isReady) return {};
-    return t('stress.options', { returnObjects: true });
-  }, [t, isReady]);
-
-  const sleepOptions = useMemo(() => {
-    if (!isReady) return {};
-    return t('sleep.options', { returnObjects: true });
-  }, [t, isReady]);
-
-  const socialOptions = useMemo(() => {
-    if (!isReady) return {};
-    return t('social.options', { returnObjects: true });
-  }, [t, isReady]);
-
-  useEffect(() => {
-    if (i18n.isInitialized && i18n.hasResourceBundle(i18n.language, 'additional-assessments')) {
-      setIsReady(true);
-    }
-  }, [i18n.isInitialized, i18n.language, i18n]);
-
-  const formSchema = useMemo(() => {
-    if (!isReady || resilienceQuestions.length === 0) {
-      return z.object({});
-    }
-    return z.object({
-      // Resilience questions
-      ...Object.fromEntries(resilienceQuestions.map((q: any) => [q.id, z.string().nonempty('Please select an answer.')])),
-      // Stress questions
-      ...Object.fromEntries(stressQuestions.map((q: any) => [q.id, z.string().nonempty('Please select an answer.')])),
-      // Sleep questions
-      ...Object.fromEntries(sleepQuestions.map((q: any) => [q.id, z.string().nonempty('Please select an answer.')])),
-      // Social support questions
-      ...Object.fromEntries(socialQuestions.map((q: any) => [q.id, z.string().nonempty('Please select an answer.')]))
-    });
-  }, [isReady, resilienceQuestions, stressQuestions, sleepQuestions, socialQuestions]);
-
-  type FormValues = z.infer<typeof formSchema>;
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {},
-  });
-
-  const calculateScores = (data: FormValues) => {
-    // Calculate Resilience Score (BRS)
-    const resilienceAnswers = resilienceQuestions.map((q: any) => {
-      const value = parseInt(data[q.id as keyof FormValues], 10);
-      const score = q.reverse ? (6 - value) : value; // Reverse scoring for negative items
-      return {
-        question: q.text,
-        option: resilienceOptions[data[q.id as keyof FormValues] as keyof typeof resilienceOptions],
-        score
-      };
-    });
-    const resilienceScore = resilienceAnswers.reduce((sum, answer) => sum + answer.score, 0);
-
-    // Calculate Stress Score (PSS-4)
-    const stressAnswers = stressQuestions.map((q: any) => {
-      const value = parseInt(data[q.id as keyof FormValues], 10);
-      const score = q.reverse ? (4 - value) : value; // Reverse scoring for positive items
-      return {
-        question: q.text,
-        option: stressOptions[data[q.id as keyof FormValues] as keyof typeof stressOptions],
-        score
-      };
-    });
-    const stressScore = stressAnswers.reduce((sum, answer) => sum + answer.score, 0);
-
-    // Calculate Sleep Quality Score
-    const sleepAnswers = sleepQuestions.map((q: any) => {
-      const value = parseInt(data[q.id as keyof FormValues], 10);
-      return {
-        question: q.text,
-        option: sleepOptions[data[q.id as keyof FormValues] as keyof typeof sleepOptions],
-        score: value
-      };
-    });
-    const sleepScore = sleepAnswers.reduce((sum, answer) => sum + answer.score, 0);
-
-    // Calculate Social Support Score
-    const socialAnswers = socialQuestions.map((q: any) => {
-      const value = parseInt(data[q.id as keyof FormValues], 10);
-      return {
-        question: q.text,
-        option: socialOptions[data[q.id as keyof FormValues] as keyof typeof socialOptions],
-        score: value
-      };
-    });
-    const socialScore = socialAnswers.reduce((sum, answer) => sum + answer.score, 0);
-
-    return {
-      resilience: { score: resilienceScore, answers: resilienceAnswers },
-      stress: { score: stressScore, answers: stressAnswers },
-      sleep_quality: { score: sleepScore, answers: sleepAnswers },
-      social_support: { score: socialScore, answers: socialAnswers }
-    };
+  const handleAnswerChange = (questionId: string, value: string) => {
+    setAnswers(prev => ({ ...prev, [questionId]: value }));
   };
 
-  const onSubmit = async (data: FormValues) => {
+  const handleSubmit = () => {
+    const unanswered = assessmentQuestions.filter(q => !answers[q.id]);
+    if (unanswered.length > 0) {
+      alert(`Please answer all questions. Missing: ${unanswered.map(q => q.title).join(', ')}`);
+      return;
+    }
+
     setIsSubmitting(true);
-    
-    try {
-      const scores = calculateScores(data);
-      
-      // Call the completion handler
-      onComplete(scores);
-      
-      // Small delay for user feedback
-      setTimeout(() => {
-        onNext();
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Error submitting additional assessments:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
-  if (!isReady || resilienceQuestions.length === 0) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-12 w-12 animate-spin text-emerald-400" />
-      </div>
-    );
-  }
+    // Calculate scores and prepare results
+    const results = {
+      resilience: {
+        score: parseInt(answers.resilience),
+        answers: [{ question: 'Resilience assessment', answer: answers.resilience }]
+      },
+      stress: {
+        score: parseInt(answers.stress),
+        answers: [{ question: 'Stress level assessment', answer: answers.stress }]
+      },
+      sleep_quality: {
+        score: parseInt(answers.sleep_quality),
+        answers: [{ question: 'Sleep quality assessment', answer: answers.sleep_quality }]
+      },
+      social_support: {
+        score: parseInt(answers.social_support),
+        answers: [{ question: 'Social support assessment', answer: answers.social_support }]
+      }
+    };
+
+    setTimeout(() => {
+      onComplete(results);
+      onNext();
+      setIsSubmitting(false);
+    }, 1000);
+  };
 
   return (
     <div className="space-y-6">
-      <Card className="bg-gray-800 border-gray-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3 text-white">
-            <BarChart3 className="w-6 h-6 text-emerald-400" />
-            {t('title', 'Additional Wellness Assessments')}
-          </CardTitle>
-          <CardDescription>
-            {t('description', 'Brief assessments to understand your resilience, stress levels, sleep quality, and social support.')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              
-              {/* Resilience Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <Shield className="w-5 h-5 text-green-400" />
-                  <h3 className="text-lg font-semibold text-white">Brief Resilience Scale</h3>
-                </div>
-                <p className="text-sm text-gray-400 mb-4">
-                  Please indicate how much you agree or disagree with each statement.
-                </p>
-                
-                {resilienceQuestions.map((question, index) => (
-                  <FormField
-                    key={question.id}
-                    control={form.control}
-                    name={question.id as any}
-                    render={({ field }) => (
-                      <FormItem className="space-y-3 p-4 rounded-lg border border-gray-600/50 bg-gray-700/20">
-                        <FormLabel className="text-sm text-white font-medium">
-                          {index + 1}. {question.text}
-                        </FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="grid grid-cols-1 md:grid-cols-5 gap-2"
-                          >
-                            {Object.entries(resilienceOptions).map(([value, label]) => (
-                              <FormItem key={value} className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem 
-                                    value={value} 
-                                    id={`${field.name}-${value}`} 
-                                    className="text-green-400 border-gray-500" 
-                                  />
-                                </FormControl>
-                                <FormLabel 
-                                  htmlFor={`${field.name}-${value}`} 
-                                  className="text-xs text-gray-300 cursor-pointer"
-                                >
-                                  {label}
-                                </FormLabel>
-                              </FormItem>
-                            ))}
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage className="text-red-400" />
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </div>
+      <div className="text-center">
+        <Shield className="w-12 h-12 text-green-400 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-white mb-2">Additional Wellness Assessment</h3>
+        <p className="text-gray-300">
+          Please answer these questions about your resilience, stress, sleep, and social support.
+        </p>
+      </div>
 
-              {/* Stress Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <Zap className="w-5 h-5 text-red-400" />
-                  <h3 className="text-lg font-semibold text-white">Perceived Stress Scale</h3>
-                </div>
-                <p className="text-sm text-gray-400 mb-4">
-                  The questions ask about your feelings and thoughts during the last month.
-                </p>
-                
-                {stressQuestions.map((question, index) => (
-                  <FormField
-                    key={question.id}
-                    control={form.control}
-                    name={question.id as any}
-                    render={({ field }) => (
-                      <FormItem className="space-y-3 p-4 rounded-lg border border-gray-600/50 bg-gray-700/20">
-                        <FormLabel className="text-sm text-white font-medium">
-                          {index + 1}. {question.text}
-                        </FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="grid grid-cols-1 md:grid-cols-5 gap-2"
-                          >
-                            {Object.entries(stressOptions).map(([value, label]) => (
-                              <FormItem key={value} className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem 
-                                    value={value} 
-                                    id={`${field.name}-${value}`} 
-                                    className="text-red-400 border-gray-500" 
-                                  />
-                                </FormControl>
-                                <FormLabel 
-                                  htmlFor={`${field.name}-${value}`} 
-                                  className="text-xs text-gray-300 cursor-pointer"
-                                >
-                                  {label}
-                                </FormLabel>
-                              </FormItem>
-                            ))}
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage className="text-red-400" />
-                      </FormItem>
-                    )}
-                  />
+      {assessmentQuestions.map((assessment) => {
+        const Icon = assessment.icon;
+        return (
+          <Card key={assessment.id} className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-white">
+                <Icon className={`w-6 h-6 ${assessment.color}`} />
+                {assessment.title}
+              </CardTitle>
+              <CardDescription>{assessment.question}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup 
+                value={answers[assessment.id] || ''} 
+                onValueChange={(value) => handleAnswerChange(assessment.id, value)}
+              >
+                {assessment.options.map((option) => (
+                  <div key={option.value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={option.value} id={`${assessment.id}-${option.value}`} />
+                    <Label 
+                      htmlFor={`${assessment.id}-${option.value}`} 
+                      className="text-gray-300 cursor-pointer text-sm"
+                    >
+                      {option.label}
+                    </Label>
+                  </div>
                 ))}
-              </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+        );
+      })}
 
-              {/* Sleep Quality Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <Moon className="w-5 h-5 text-blue-400" />
-                  <h3 className="text-lg font-semibold text-white">Sleep Quality Assessment</h3>
-                </div>
-                
-                {sleepQuestions.map((question, index) => (
-                  <FormField
-                    key={question.id}
-                    control={form.control}
-                    name={question.id as any}
-                    render={({ field }) => (
-                      <FormItem className="space-y-3 p-4 rounded-lg border border-gray-600/50 bg-gray-700/20">
-                        <FormLabel className="text-sm text-white font-medium">
-                          {index + 1}. {question.text}
-                        </FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="grid grid-cols-1 md:grid-cols-4 gap-2"
-                          >
-                            {Object.entries(sleepOptions).map(([value, label]) => (
-                              <FormItem key={value} className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem 
-                                    value={value} 
-                                    id={`${field.name}-${value}`} 
-                                    className="text-blue-400 border-gray-500" 
-                                  />
-                                </FormControl>
-                                <FormLabel 
-                                  htmlFor={`${field.name}-${value}`} 
-                                  className="text-xs text-gray-300 cursor-pointer"
-                                >
-                                  {label}
-                                </FormLabel>
-                              </FormItem>
-                            ))}
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage className="text-red-400" />
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </div>
-
-              {/* Social Support Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <Users className="w-5 h-5 text-purple-400" />
-                  <h3 className="text-lg font-semibold text-white">Social Support Assessment</h3>
-                </div>
-                
-                {socialSupportQuestions.map((question, index) => (
-                  <FormField
-                    key={question.id}
-                    control={form.control}
-                    name={question.id as any}
-                    render={({ field }) => (
-                      <FormItem className="space-y-3 p-4 rounded-lg border border-gray-600/50 bg-gray-700/20">
-                        <FormLabel className="text-sm text-white font-medium">
-                          {index + 1}. {question.text}
-                        </FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="grid grid-cols-1 md:grid-cols-7 gap-1"
-                          >
-                            {Object.entries(socialOptions).map(([value, label]) => (
-                              <FormItem key={value} className="flex items-center space-x-1 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem 
-                                    value={value} 
-                                    id={`${field.name}-${value}`} 
-                                    className="text-purple-400 border-gray-500" 
-                                  />
-                                </FormControl>
-                                <FormLabel 
-                                  htmlFor={`${field.name}-${value}`} 
-                                  className="text-xs text-gray-300 cursor-pointer"
-                                >
-                                  {label}
-                                </FormLabel>
-                              </FormItem>
-                            ))}
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage className="text-red-400" />
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </div>
-              
-              <div className="pt-6">
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting} 
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing Results...
-                    </>
-                  ) : (
-                    'Complete Additional Assessments'
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+      <div className="text-center">
+        <Button
+          onClick={handleSubmit}
+          disabled={assessmentQuestions.some(q => !answers[q.id]) || isSubmitting}
+          className="bg-emerald-500 hover:bg-emerald-600 px-8 py-3"
+        >
+          {isSubmitting ? (
+            <div className="flex items-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Processing...
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              Complete Assessment
+            </div>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
