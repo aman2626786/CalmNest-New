@@ -5,6 +5,8 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  NODE_ENV = "production"
+  DATABASE_URL = "postgresql://postgres:%2A13579%2ASharma@db.lrvmsulryjwgrqwniltm.supabase.co:5432/postgres"
 
 [[redirects]]
   from = "/api/*"
