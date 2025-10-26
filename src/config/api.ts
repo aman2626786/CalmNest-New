@@ -1,6 +1,6 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001',
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:5001'),
   ENDPOINTS: {
     PROFILE: '/api/profile',
     FEEDBACK: '/api/feedback',

@@ -139,3 +139,5 @@ instance/
 # Backup files
 *.bak
 *.backup
+# Local Netlify folder
+.netlify
