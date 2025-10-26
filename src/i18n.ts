@@ -138,16 +138,20 @@ const loadNamespace = async (lng: string, ns: string) => {
   }
 };
 
-// Pre-load common, PHQ9, GAD7, and Dashboard translations
+// Pre-load common, PHQ9, GAD7, Dashboard, Forum, and Exercises translations
 if (typeof window !== 'undefined') {
   loadNamespace('en', 'common');
   loadNamespace('en', 'phq9');
   loadNamespace('en', 'gad7');
   loadNamespace('en', 'dashboard');
+  loadNamespace('en', 'forum');
+  loadNamespace('en', 'exercises');
   loadNamespace('hi', 'common');
   loadNamespace('hi', 'phq9');
   loadNamespace('hi', 'gad7');
   loadNamespace('hi', 'dashboard');
+  loadNamespace('hi', 'forum');
+  loadNamespace('hi', 'exercises');
 }
 
 export default i18n;

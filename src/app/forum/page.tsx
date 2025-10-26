@@ -69,14 +69,14 @@ export default function ForumPage() {
               Safe Community Space
             </Badge>
           </div>
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">{t('title')}</h1>
+          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">{t('title', 'Peer Support Forum')}</h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8 leading-relaxed">
-            {t('subtitle')}
+            {t('subtitle', 'A safe and anonymous space to share, connect, and support one another.')}
           </p>
           <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg">
             <Link href="/forum/new" className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5" />
-              {t('newPost')}
+              {t('newPost', 'Create a New Post')}
             </Link>
           </Button>
         </div>
@@ -87,25 +87,25 @@ export default function ForumPage() {
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto text-center">
             <div className="p-6 bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-700/50 hover:border-purple-500/50 transition-colors">
                 <Shield className="h-12 w-12 mx-auto mb-4 text-purple-400"/>
-                <h3 className="text-xl font-bold mb-2 text-white">{t('features.anonymous.title')}</h3>
-                <p className="text-gray-300">{t('features.anonymous.description')}</p>
+                <h3 className="text-xl font-bold mb-2 text-white">{t('features.anonymous.title', 'Anonymous Sharing')}</h3>
+                <p className="text-gray-300">{t('features.anonymous.description', 'Your identity is always protected. Share openly without fear of judgment.')}</p>
             </div>
             <div className="p-6 bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-700/50 hover:border-purple-500/50 transition-colors">
                 <Users className="h-12 w-12 mx-auto mb-4 text-purple-400"/>
-                <h3 className="text-xl font-bold mb-2 text-white">{t('features.community.title')}</h3>
-                <p className="text-gray-300">{t('features.community.description')}</p>
+                <h3 className="text-xl font-bold mb-2 text-white">{t('features.community.title', 'Community Support')}</h3>
+                <p className="text-gray-300">{t('features.community.description', 'Connect with peers who understand what you\'re going through.')}</p>
             </div>
             <div className="p-6 bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-700/50 hover:border-purple-500/50 transition-colors">
                 <MessageSquare className="h-12 w-12 mx-auto mb-4 text-purple-400"/>
-                <h3 className="text-xl font-bold mb-2 text-white">{t('features.constructive.title')}</h3>
-                <p className="text-gray-300">{t('features.constructive.description')}</p>
+                <h3 className="text-xl font-bold mb-2 text-white">{t('features.constructive.title', 'Constructive Conversations')}</h3>
+                <p className="text-gray-300">{t('features.constructive.description', 'Engage in helpful and supportive discussions, moderated for safety.')}</p>
             </div>
         </div>
       </section>
 
       {/* Post List */}
       <section className="py-16 px-4 max-w-4xl mx-auto">
-        <h2 className="text-3xl font-bold mb-8 text-foreground">{t('recentDiscussions')}</h2>
+        <h2 className="text-3xl font-bold mb-8 text-foreground">{t('recentDiscussions', 'Recent Discussions')}</h2>
         {loading ? (
           <div className="flex justify-center items-center h-40">
             <Loader2 className="h-12 w-12 animate-spin text-purple-400" />
@@ -117,8 +117,8 @@ export default function ForumPage() {
           </Alert>
         ) : posts.length === 0 ? (
           <div className="text-center text-muted-foreground py-16">
-            <p className="text-xl">{t('noPosts.title')}</p>
-            <p>{t('noPosts.subtitle')}</p>
+            <p className="text-xl">{t('noPosts.title', 'No posts yet.')}</p>
+            <p>{t('noPosts.subtitle', 'Be the first to start a conversation!')}</p>
           </div>
         ) : (
           <div className="space-y-6">

@@ -10,15 +10,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { FAQ } from '@/components/common/FAQ';
 import { HydrationSafeTranslation } from '@/components/common/HydrationSafeTranslation';
+import { useTranslation } from 'react-i18next';
 
-const breathingExercises = [
+const getBreathingExercises = (t: any) => [
   {
     id: 'box-breathing',
-    title: 'Box Breathing',
+    title: t('exercises.box-breathing.title'),
     icon: <Wind className="h-8 w-8 text-blue-500" />,
-    description: 'A simple technique to calm your nervous system and reduce stress.',
-    science: 'Evens out breath pace, stimulating the vagus nerve to lower heart rate and blood pressure.',
-    steps: ['Inhale for 4s', 'Hold for 4s', 'Exhale for 4s', 'Hold for 4s'],
+    description: t('exercises.box-breathing.description'),
+    science: t('exercises.box-breathing.science'),
+    steps: t('exercises.box-breathing.steps', { returnObjects: true }),
     duration: '5-10 minutes',
     difficulty: 'Beginner',
     cycle: [
@@ -30,11 +31,11 @@ const breathingExercises = [
   },
   {
     id: '478-breathing',
-    title: '4-7-8 Breathing',
+    title: t('exercises.478-breathing.title'),
     icon: <Zap className="h-8 w-8 text-purple-500" />,
-    description: 'Known as the "relaxing breath," it helps with anxiety and sleep.',
-    science: 'Acts as a natural tranquilizer for the nervous system by increasing oxygen in the bloodstream.',
-    steps: ['Inhale for 4s', 'Hold for 7s', 'Exhale for 8s'],
+    description: t('exercises.478-breathing.description'),
+    science: t('exercises.478-breathing.science'),
+    steps: t('exercises.478-breathing.steps', { returnObjects: true }),
     duration: '3-5 minutes',
     difficulty: 'Intermediate',
     cycle: [
@@ -45,11 +46,11 @@ const breathingExercises = [
   },
    {
     id: '54321-grounding',
-    title: '5-4-3-2-1 Grounding',
+    title: t('exercises.54321-grounding.title'),
     icon: <Eye className="h-8 w-8 text-green-500" />,
-    description: 'Pulls you out of anxious thoughts by focusing on your senses.',
-    science: 'Redirects focus from internal distress to the external environment, interrupting overwhelming thoughts.',
-    steps: ['See 5 things', 'Feel 4 things', 'Hear 3 things', 'Smell 2 things', 'Taste 1 thing'],
+    description: t('exercises.54321-grounding.description'),
+    science: t('exercises.54321-grounding.science'),
+    steps: t('exercises.54321-grounding.steps', { returnObjects: true }),
     duration: '5-7 minutes',
     difficulty: 'Beginner',
      cycle: [
@@ -62,11 +63,11 @@ const breathingExercises = [
   },
   {
     id: 'alternate-nostril',
-    title: 'Alternate Nostril Breathing',
+    title: t('exercises.alternate-nostril.title'),
     icon: <Brain className="h-8 w-8 text-indigo-500" />,
-    description: 'Balances the brain hemispheres, promoting clarity and calm.',
-    science: 'Nadi Shodhana is said to harmonize the left and right brain hemispheres, calming the mind.',
-    steps: ['Inhale left', 'Exhale right', 'Inhale right', 'Exhale left'],
+    description: t('exercises.alternate-nostril.description'),
+    science: t('exercises.alternate-nostril.science'),
+    steps: t('exercises.alternate-nostril.steps', { returnObjects: true }),
     duration: '5-10 minutes',
     difficulty: 'Advanced',
     cycle: [
@@ -78,14 +79,14 @@ const breathingExercises = [
   },
 ];
 
-const sleepTechniques = [
+const getSleepTechniques = (t: any) => [
   {
     id: 'progressive-muscle-relaxation',
-    title: 'Progressive Muscle Relaxation',
+    title: t('exercises.pmr.title'),
     icon: <PersonStanding className="h-8 w-8 text-purple-500" />,
-    description: 'Systematically tense and relax muscle groups to release physical tension.',
-    science: 'Teaches the body the difference between tension and relaxation, promoting deep sleep.',
-    steps: ['Tense muscles for 5s', 'Release and relax for 10s', 'Move through all muscle groups'],
+    description: t('exercises.pmr.description'),
+    science: t('exercises.pmr.science'),
+    steps: t('exercises.pmr.steps', { returnObjects: true }),
     duration: '15-20 minutes',
     difficulty: 'Beginner',
     cycle: [
@@ -105,11 +106,11 @@ const sleepTechniques = [
   },
   {
     id: 'body-scan-meditation',
-    title: 'Body Scan Meditation',
+    title: t('exercises.body-scan.title'),
     icon: <Sparkles className="h-8 w-8 text-blue-500" />,
-    description: 'Mindfully scan your body from head to toe, releasing tension.',
-    science: 'Promotes awareness of physical sensations and helps release unconscious tension.',
-    steps: ['Start at your head', 'Slowly move down your body', 'Notice and release tension'],
+    description: t('exercises.body-scan.description'),
+    science: t('exercises.body-scan.science'),
+    steps: t('exercises.body-scan.steps', { returnObjects: true }),
     duration: '10-15 minutes',
     difficulty: 'Beginner',
     cycle: [
@@ -127,11 +128,11 @@ const sleepTechniques = [
   },
   {
     id: 'sleep-breathing',
-    title: 'Sleep Breathing (4-7-8)',
+    title: t('exercises.sleep-breathing.title'),
     icon: <Moon className="h-8 w-8 text-indigo-500" />,
-    description: 'Dr. Andrew Weil\'s technique specifically designed for falling asleep.',
-    science: 'Slows heart rate and activates the parasympathetic nervous system for sleep.',
-    steps: ['Inhale for 4s', 'Hold for 7s', 'Exhale for 8s', 'Repeat 4 cycles'],
+    description: t('exercises.sleep-breathing.description'),
+    science: t('exercises.sleep-breathing.science'),
+    steps: t('exercises.sleep-breathing.steps', { returnObjects: true }),
     duration: '2-4 minutes',
     difficulty: 'Intermediate',
     cycle: [
@@ -142,11 +143,11 @@ const sleepTechniques = [
   },
   {
     id: 'visualization-technique',
-    title: 'Sleep Visualization',
+    title: t('exercises.visualization.title'),
     icon: <Eye className="h-8 w-8 text-green-500" />,
-    description: 'Imagine peaceful scenes to quiet the mind for sleep.',
-    science: 'Engages the visual cortex, reducing activity in areas associated with worry and stress.',
-    steps: ['Choose a peaceful scene', 'Engage all your senses', 'Stay focused on details'],
+    description: t('exercises.visualization.description'),
+    science: t('exercises.visualization.science'),
+    steps: t('exercises.visualization.steps', { returnObjects: true }),
     duration: '10-20 minutes',
     difficulty: 'Beginner',
     cycle: [
@@ -160,11 +161,11 @@ const sleepTechniques = [
   },
   {
     id: 'counting-technique',
-    title: 'Reverse Counting',
+    title: t('exercises.counting.title'),
     icon: <Clock className="h-8 w-8 text-orange-500" />,
-    description: 'Count backwards from 100, visualizing each number.',
-    science: 'Occupies the mind with a simple task, preventing racing thoughts.',
-    steps: ['Start at 100', 'Count backwards slowly', 'Visualize each number'],
+    description: t('exercises.counting.description'),
+    science: t('exercises.counting.science'),
+    steps: t('exercises.counting.steps', { returnObjects: true }),
     duration: '5-15 minutes',
     difficulty: 'Beginner',
     cycle: [
@@ -176,11 +177,11 @@ const sleepTechniques = [
   },
   {
     id: 'gratitude-relaxation',
-    title: 'Gratitude Relaxation',
+    title: t('exercises.gratitude.title'),
     icon: <Heart className="h-8 w-8 text-pink-500" />,
-    description: 'Focus on positive thoughts and gratitude before sleep.',
-    science: 'Shifts focus to positive emotions, reducing stress hormones and promoting relaxation.',
-    steps: ['Think of 3 good things', 'Feel grateful for each', 'Let positivity fill your mind'],
+    description: t('exercises.gratitude.description'),
+    science: t('exercises.gratitude.science'),
+    steps: t('exercises.gratitude.steps', { returnObjects: true }),
     duration: '5-10 minutes',
     difficulty: 'Beginner',
     cycle: [
@@ -262,7 +263,7 @@ const GuidedExercise = ({ exercise, onFinish }) => {
 };
 
 
-const ExerciseGrid = ({ exercises, onStart }) => (
+const ExerciseGrid = ({ exercises, onStart, t }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {exercises.map((exercise) => (
       <Card key={exercise.id} className="group flex flex-col bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-all duration-300 hover:-translate-y-1">
@@ -288,18 +289,23 @@ const ExerciseGrid = ({ exercises, onStart }) => (
             </div>
           </div>
           <div>
-            <h4 className="font-semibold text-sm text-purple-400 mb-2">How it Works</h4>
+            <h4 className="font-semibold text-sm text-purple-400 mb-2">{t('howItWorks')}</h4>
             <p className="text-sm text-gray-300 leading-relaxed">{exercise.science}</p>
           </div>
           <div>
-            <h4 className="font-semibold text-sm text-purple-400 mb-2">Steps</h4>
+            <h4 className="font-semibold text-sm text-purple-400 mb-2">{t('steps')}</h4>
             <ul className="space-y-1">
-              {exercise.steps.map((step, i) => (
+              {Array.isArray(exercise.steps) ? exercise.steps.map((step, i) => (
                 <li key={i} className="text-sm text-gray-300 flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-purple-400 rounded-full flex-shrink-0" />
                   {step}
                 </li>
-              ))}
+              )) : (
+                <li className="text-sm text-gray-300 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-purple-400 rounded-full flex-shrink-0" />
+                  {t('steps')} not available
+                </li>
+              )}
             </ul>
           </div>
         </CardContent>
@@ -308,7 +314,7 @@ const ExerciseGrid = ({ exercises, onStart }) => (
             className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700" 
             onClick={() => onStart(exercise)}
           >
-            Start {exercise.title.includes('Sleep') || exercise.title.includes('Relaxation') || exercise.title.includes('Body Scan') || exercise.title.includes('Visualization') || exercise.title.includes('Counting') || exercise.title.includes('Gratitude') ? 'Sleep' : 'Breathing'} Exercise
+            {exercise.title.includes('Sleep') || exercise.title.includes('Relaxation') || exercise.title.includes('Body Scan') || exercise.title.includes('Visualization') || exercise.title.includes('Counting') || exercise.title.includes('Gratitude') ? t('startSleepExercise') : t('startBreathingExercise')}
           </Button>
         </div>
       </Card>
@@ -317,8 +323,12 @@ const ExerciseGrid = ({ exercises, onStart }) => (
 );
 
 export default function GuidedBreathingPage() {
+  const { t } = useTranslation('exercises');
   const [activeExercise, setActiveExercise] = useState(null);
   const session = useSession();
+  
+  const breathingExercises = getBreathingExercises(t);
+  const sleepTechniques = getSleepTechniques(t);
 
   const handleFinish = () => {
     if (!activeExercise) return;
@@ -400,11 +410,10 @@ export default function GuidedBreathingPage() {
             </Badge>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent" suppressHydrationWarning>
-            Breathing & Sleep Techniques
+            {t('title')}
           </h1>
           <p className="text-xl text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto">
-            Master the art of relaxation with scientifically-proven breathing exercises and sleep techniques. 
-            Find your calm, reduce stress, and improve your sleep quality naturally.
+            {t('subtitle')}
           </p>
         </div>
       </section>
@@ -419,35 +428,35 @@ export default function GuidedBreathingPage() {
                 className="flex items-center gap-2 text-gray-300 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white"
               >
                 <Wind className="w-4 h-4" />
-                Breathing Exercises
+                {t('breathingTab')}
               </TabsTrigger>
               <TabsTrigger 
                 value="sleep" 
                 className="flex items-center gap-2 text-gray-300 hover:text-white data-[state=active]:bg-purple-600 data-[state=active]:text-white"
               >
                 <Moon className="w-4 h-4" />
-                Sleep Techniques
+                {t('sleepTab')}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="breathing" className="space-y-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold mb-4">Breathing Exercises</h2>
+                <h2 className="text-3xl font-bold mb-4">{t('breathingTitle')}</h2>
                 <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-                  Quick and effective breathing techniques to reduce stress, anxiety, and promote relaxation
+                  {t('breathingSubtitle')}
                 </p>
               </div>
-              <ExerciseGrid exercises={breathingExercises} onStart={setActiveExercise} />
+              <ExerciseGrid exercises={breathingExercises} onStart={setActiveExercise} t={t} />
             </TabsContent>
 
             <TabsContent value="sleep" className="space-y-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold mb-4">Sleep Techniques</h2>
+                <h2 className="text-3xl font-bold mb-4">{t('sleepTitle')}</h2>
                 <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-                  Proven methods to help you fall asleep faster and achieve deeper, more restful sleep
+                  {t('sleepSubtitle')}
                 </p>
               </div>
-              <ExerciseGrid exercises={sleepTechniques} onStart={setActiveExercise} />
+              <ExerciseGrid exercises={sleepTechniques} onStart={setActiveExercise} t={t} />
             </TabsContent>
           </Tabs>
         </div>
