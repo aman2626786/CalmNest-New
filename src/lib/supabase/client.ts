@@ -41,7 +41,7 @@ const hasRealCredentials = config.isValid &&
                           supabaseUrl.includes('.supabase.co')
 
 // Temporary fallback to local auth if Supabase not available
-const forceLocalAuth = !hasRealCredentials
+const forceLocalAuth = false // Set to false to enable Supabase
 
 // Create Supabase client
 export const supabase = hasRealCredentials 
