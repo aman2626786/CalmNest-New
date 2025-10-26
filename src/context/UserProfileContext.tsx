@@ -88,8 +88,9 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       
-      // Try to fetch from Flask backend first
-      const response = await fetch(`http://127.0.0.1:5001/api/profile/${session.user.id}`);
+      // Try to fetch from API backend first
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+      const response = await fetch(`${apiUrl}/api/profile/${session.user.id}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -172,9 +173,10 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
         updated_at: new Date().toISOString()
       };
 
-      // Try Flask backend update
+      // Try API backend update
       try {
-        const response = await fetch(`http://127.0.0.1:5001/api/profile/${session.user.id}`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+        const response = await fetch(`${apiUrl}/api/profile/${session.user.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

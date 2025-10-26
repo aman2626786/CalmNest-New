@@ -299,7 +299,7 @@ exports.handler = async (event, context) => {
       const userId = path.split('/profile/')[1];
       
       try {
-        const result = await pool.query('SELECT * FROM profile WHERE id = $1', [userId]);
+        const result = await dbPool.query('SELECT * FROM profile WHERE id = $1', [userId]);
         
         if (result.rows.length === 0) {
           return createResponse(404, { error: 'Profile not found' });
@@ -309,6 +309,45 @@ exports.handler = async (event, context) => {
       } catch (dbError) {
         console.error('Profile fetch error:', dbError);
         return createResponse(500, { error: 'Failed to fetch profile' });
+      }
+    }
+
+    // Profile Update API
+    if (path.startsWith('/profile/') && method === 'PUT') {
+      const userId = path.split('/profile/')[1];
+      
+      try {
+        const { email, full_name, age, gender } = body;
+        
+        // First check if profile exists
+        const existingProfile = await dbPool.query('SELECT * FROM profile WHERE id = $1', [userId]);
+        
+        if (existingProfile.rows.length === 0) {
+          // Create new profile
+          const result = await dbPool.query(
+            'INSERT INTO profile (id, email, full_name, age, gender) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [userId, email, full_name, age, gender]
+          );
+          
+          return createResponse(201, { 
+            message: 'Profile created successfully',
+            profile: result.rows[0]
+          });
+        } else {
+          // Update existing profile
+          const result = await dbPool.query(
+            'UPDATE profile SET email = $2, full_name = $3, age = $4, gender = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
+            [userId, email, full_name, age, gender]
+          );
+          
+          return createResponse(200, { 
+            message: 'Profile updated successfully',
+            profile: result.rows[0]
+          });
+        }
+      } catch (dbError) {
+        console.error('Profile update error:', dbError);
+        return createResponse(500, { error: 'Failed to update profile' });
       }
     }
 
