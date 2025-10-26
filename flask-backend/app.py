@@ -927,6 +927,47 @@ def create_profile():
         print(f"Error creating profile: {str(e)}")
         return jsonify({'error': f'Failed to create profile: {str(e)}'}), 500
 
+@app.route('/api/profile/email/<email>', methods=['GET'])
+def get_profile_by_email(email):
+    """Get user profile by email"""
+    try:
+        profile = Profile.query.filter_by(email=email).first()
+        
+        if profile:
+            return jsonify({
+                'id': profile.id,
+                'email': profile.email,
+                'full_name': profile.full_name,
+                'age': profile.age,
+                'gender': profile.gender,
+                'created_at': profile.created_at.isoformat(),
+                'updated_at': profile.updated_at.isoformat()
+            })
+        else:
+            return jsonify({'error': 'Profile not found'}), 404
+            
+    except Exception as e:
+        return jsonify({'error': f'Failed to fetch profile: {str(e)}'}), 500
+
+@app.route('/api/profile/<user_id>', methods=['DELETE'])
+def delete_profile(user_id):
+    """Delete user profile by user ID"""
+    try:
+        profile = Profile.query.filter_by(id=user_id).first()
+        
+        if profile:
+            db.session.delete(profile)
+            db.session.commit()
+            print(f"Profile deleted successfully for user: {user_id}")
+            return jsonify({'message': 'Profile deleted successfully'}), 200
+        else:
+            return jsonify({'error': 'Profile not found'}), 404
+            
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting profile: {str(e)}")
+        return jsonify({'error': f'Failed to delete profile: {str(e)}'}), 500
+
 @app.route('/api/profile/<user_id>', methods=['PUT'])
 def update_profile(user_id):
     """Update user profile"""

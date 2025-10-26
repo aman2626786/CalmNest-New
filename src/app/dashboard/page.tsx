@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
-import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase/client';
+import { getCurrentUserProfile, getCurrentUserEmail } from '@/lib/services/userProfileService';
+import { testBackendConnection, getUserProfileFromBackend } from '@/lib/services/backendSync';
 import Link from 'next/link';
 import { useTranslation, Trans } from 'react-i18next';
 import { TestPerformanceChart } from '@/components/features/dashboard/TestPerformanceChart';
@@ -79,13 +81,53 @@ interface FacialAnalysisData {
 
 const DashboardPage = () => {
   const session = useSession();
-  const { user: authUser } = useAuth();
   const { t } = useTranslation('dashboard');
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [facialAnalysisData, setFacialAnalysisData] = useState<FacialAnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authChecking, setAuthChecking] = useState(true);
   const dashboardRef = useRef<HTMLDivElement>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Import simple auth
+        const { isAuthenticated, getCurrentUser } = await import('@/lib/auth/simpleAuth');
+        
+        if (!isAuthenticated()) {
+          console.log('No authenticated user found, redirecting to login');
+          window.location.href = '/login';
+          return;
+        }
+
+        const user = getCurrentUser();
+        console.log('User authenticated:', user?.email);
+        
+        if (!user) {
+          console.log('No user data found, redirecting to login');
+          window.location.href = '/login';
+          return;
+        }
+
+        console.log('User profile complete:', user);
+        
+        // Test backend connection and fetch backend profile
+        const backendConnected = await testBackendConnection();
+        if (backendConnected) {
+          const backendProfile = await getUserProfileFromBackend(user.id);
+          console.log('Backend profile:', backendProfile);
+        }
+        
+        setAuthChecking(false);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        window.location.href = '/login';
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -102,7 +144,7 @@ const DashboardPage = () => {
   }, []);
 
   useEffect(() => {
-    const currentUser = session?.user || authUser;
+    const currentUser = session?.user;
     
     if (currentUser?.id && currentUser?.email) {
       const fetchData = async () => {
@@ -121,8 +163,8 @@ const DashboardPage = () => {
             timestamp: new Date().toISOString()
           }));
 
-          // For local auth users, show sample data instead of API calls
-          if (authUser && !session?.user?.id) {
+          // For demo purposes, show sample data if API calls fail
+          if (!session?.user?.id) {
             console.log('Dashboard: Using sample data for local auth user');
             
             // Set sample data for local auth users
@@ -193,7 +235,7 @@ const DashboardPage = () => {
     } else {
       setLoading(false);
     }
-  }, [session, authUser]);
+  }, [session]);
 
   const handleDownloadImage = (format: 'png' | 'jpg' = 'png') => {
     if (!dashboardRef.current) return;
@@ -242,25 +284,12 @@ const DashboardPage = () => {
     });
   };
 
-  if (loading) {
+  if (authChecking || loading) {
     return (
       <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">
-        <p>Loading dashboard...</p>
-      </div>
-    );
-  }
-
-  // Check for authentication
-  const isAuthenticated = session?.user?.id || authUser;
-
-  if (!isAuthenticated) {
-    return (
-      <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center text-center">
-        <div>
-          <p className="text-lg mb-4">Please sign in to view your dashboard</p>
-          <Link href="/login" className="text-blue-400 hover:underline text-lg">
-            Sign In
-          </Link>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p>Loading dashboard...</p>
         </div>
       </div>
     );

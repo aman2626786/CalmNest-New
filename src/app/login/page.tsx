@@ -2,117 +2,103 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from '@/context/AuthContext'; // Use the central AuthContext
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    fullName: '',
+    age: '',
+    gender: ''
+  });
   const [message, setMessage] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [messageType, setMessageType] = useState<'error' | 'success' | 'info'>('info');
+  const [isSignUp, setIsSignUp] = useState(true);
   const router = useRouter();
-  const { user, signUp, signIn, loading } = useAuth();
+  
+  const { user, loading, signUp, signIn } = useAuth();
 
   // Redirect if user is already logged in
   useEffect(() => {
-    if (user && !loading) {
-      router.push('/dashboard');
+    if (!loading && user) {
+      router.push('/');
     }
   }, [user, loading, router]);
 
+  // Handle Sign Up
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
-    setIsLoading(true);
-    
-    // Validate required fields
-    if (!email || !password || !fullName || !age || !gender) {
+
+    if (!formData.email || !formData.password || (isSignUp && (!formData.fullName || !formData.age || !formData.gender))) {
       setMessage('Please fill in all required fields.');
-      setIsLoading(false);
+      setMessageType('error');
       return;
     }
 
-    // Validate password length
-    if (password.length < 6) {
-      setMessage('Password must be at least 6 characters long.');
-      setIsLoading(false);
-      return;
-    }
+    const { error } = await signUp(formData.email, formData.password, {
+      full_name: formData.fullName,
+      age: parseInt(formData.age, 10),
+      gender: formData.gender
+    });
 
-    try {
-      const { error } = await signUp(email, password, {
-        full_name: fullName,
-        age: parseInt(age, 10),
-        gender: gender,
-      });
-
-      if (error) {
-        setMessage(`Error signing up: ${error.message}`);
-      } else {
-        setMessage('Sign up successful! Please check your email to confirm your account.');
-        // Clear form
-        setEmail('');
-        setPassword('');
-        setFullName('');
-        setAge('');
-        setGender('');
-        // Switch to sign in mode
-        setIsSignUp(false);
-      }
-    } catch (error: any) {
-      console.error('Signup error:', error);
-      setMessage(`Error signing up: ${error.message || 'Please try again.'}`);
-    } finally {
-      setIsLoading(false);
+    if (error) {
+      setMessage(error.message);
+      setMessageType('error');
+    } else {
+      setMessageType('success');
+      setMessage('Sign up successful! Please check your email to confirm.');
     }
   };
 
+  // Handle Sign In
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
-    setIsLoading(true);
-    
-    // Validate required fields
-    if (!email || !password) {
-      setMessage('Please enter both email and password.');
-      setIsLoading(false);
+
+    if (!formData.email || !formData.password) {
+      setMessage('Please enter your email and password.');
+      setMessageType('error');
       return;
     }
 
-    try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        setMessage(`Error signing in: ${error.message}`);
-      } else {
-        setMessage('Successfully signed in! Redirecting...');
-        // Clear form
-        setEmail('');
-        setPassword('');
-        // The AuthContext will handle the redirect
-      }
-    } catch (error: any) {
-      console.error('Signin error:', error);
-      setMessage(`Error signing in: ${error.message || 'Please check your credentials and try again.'}`);
-    } finally {
-      setIsLoading(false);
+    const { error } = await signIn(formData.email, formData.password);
+
+    if (error) {
+      setMessage(error.message);
+      setMessageType('error');
+    } else {
+      setMessageType('success');
+      setMessage('Sign in successful! Redirecting...');
     }
   };
+  
+  if (loading || user) {
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-900">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
+        </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900">
       <Card className="w-full max-w-md bg-gray-800 border-gray-700 text-white">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">{isSignUp ? 'Create an Account' : 'Welcome Back'}</CardTitle>
-          <CardDescription>{isSignUp ? 'Fill in the details to get started.' : 'Sign in to continue to CalmNest'}</CardDescription>
+          <CardTitle className="text-3xl font-bold">
+            {isSignUp ? 'Create Your Account' : 'Welcome Back'}
+          </CardTitle>
+          <CardDescription>
+            {isSignUp 
+              ? 'Fill in your details to create your CalmNest account' 
+              : 'Enter your email to sign in to your account'
+            }
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={isSignUp ? handleSignUp : handleSignIn}>
@@ -123,9 +109,10 @@ export default function LoginPage() {
                   <Input
                     id="fullName"
                     placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    value={formData.fullName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
                     className="bg-gray-700 border-gray-600 text-white"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -134,18 +121,20 @@ export default function LoginPage() {
                     id="age"
                     type="number"
                     placeholder="25"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
+                    value={formData.age}
+                    onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
                     className="bg-gray-700 border-gray-600 text-white"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="gender">Gender</Label>
                   <select
                     id="gender"
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
+                    value={formData.gender}
+                    onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
                     className="w-full p-2 bg-gray-700 border-gray-600 text-white rounded-md"
+                    required
                   >
                     <option value="" disabled>Select your gender</option>
                     <option value="male">Male</option>
@@ -157,47 +146,78 @@ export default function LoginPage() {
                 </div>
               </>
             )}
+            
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 className="bg-gray-700 border-gray-600 text-white"
+                required
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                placeholder="********"
+                value={formData.password}
+                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                 className="bg-gray-700 border-gray-600 text-white"
+                required
               />
             </div>
-            {message && <p className="text-center text-sm text-gray-300">{message}</p>}
+            
+            {message && (
+              <div className={`text-center text-sm p-3 rounded-lg ${
+                messageType === 'error' ? 'bg-red-900/30 text-red-300 border border-red-500/50' :
+                messageType === 'success' ? 'bg-green-900/30 text-green-300 border border-green-500/50' :
+                'bg-blue-900/30 text-blue-300 border border-blue-500/50'
+              }`}>
+                {message}
+              </div>
+            )}
+            
             <div className="flex flex-col space-y-4">
-                <Button 
-                  type="submit" 
-                  className="w-full bg-purple-600 hover:bg-purple-700" 
-                  disabled={isLoading || loading}
-                >
-                  {isLoading ? 'Please wait...' : (isSignUp ? 'Sign Up' : 'Sign In')}
-                </Button>
-                <Button onClick={() => setIsSignUp(!isSignUp)} variant="link" type="button" className="w-full text-purple-400 hover:text-purple-300">
-                  {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-                </Button>
-                <Button 
-                  onClick={() => router.push('/')} 
-                  variant="outline" 
-                  type="button" 
-                  className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
-                >
-                  Continue as Guest
-                </Button>
+              <Button 
+                type="submit" 
+                className="w-full bg-purple-600 hover:bg-purple-700" 
+                disabled={loading}
+              >
+                {loading 
+                  ? (isSignUp ? 'Creating Account...' : 'Signing In...') 
+                  : (isSignUp ? 'Create Account' : 'Sign In')
+                }
+              </Button>
+              
+              <Button 
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setMessage('');
+                }}
+                variant="link" 
+                type="button"
+                className="text-purple-400 hover:text-purple-300"
+              >
+                {isSignUp 
+                  ? 'Already have an account? Sign In' 
+                  : "Don't have an account? Sign Up"
+                }
+              </Button>
+              
+              <Button 
+                onClick={() => router.push('/')} 
+                variant="outline" 
+                type="button" 
+                className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
+              >
+                Continue as Guest
+              </Button>
             </div>
           </form>
         </CardContent>

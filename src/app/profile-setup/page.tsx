@@ -51,7 +51,7 @@ export default function ProfileSetupPage() {
       await refreshProfile();
       
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push('/');
       }, 1000);
     } catch (error) {
       console.error('Unexpected error:', error);
