@@ -66,7 +66,12 @@ export default function LoginPage() {
       setMessageType('error');
     } else {
       setMessageType('success');
-      setMessage('Account created! Please check your email to confirm your registration.');
+      setMessage('Account created successfully! Redirecting to profile setup...');
+      
+      // Redirect to profile setup after successful signup
+      setTimeout(() => {
+        router.push('/profile-setup');
+      }, 1500);
     }
   };
 

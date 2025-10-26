@@ -208,7 +208,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         // Use local auth fallback
         console.log('Using local auth for signup');
-        await localAuth.signUp(email, password, userData);
+        const result = await localAuth.signUp(email, password, userData);
+        
+        if (result.error) {
+          return result;
+        }
+        
+        // Auto-login after successful signup
+        const localUser = localAuth.getCurrentUser();
+        if (localUser) {
+          const mockUser = {
+            id: localUser.id,
+            email: localUser.email,
+            user_metadata: {
+              full_name: localUser.full_name,
+              age: localUser.age,
+              gender: localUser.gender
+            }
+          } as User;
+          
+          setUser(mockUser);
+          localAuth.setAuthCookie();
+          
+          if (typeof document !== 'undefined') {
+            document.cookie = `userEmail=${localUser.email}; path=/; max-age=86400`;
+          }
+          
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('userEmail', localUser.email);
+          }
+        }
+        
         return { error: null };
       }
     } catch (error) {
