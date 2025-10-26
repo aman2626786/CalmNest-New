@@ -1,7 +1,9 @@
 [build]
-  publish = ".next"
   command = "npm ci --no-optional && npm run build"
   functions = "netlify/functions"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 [build.environment]
   NODE_VERSION = "20"
