@@ -189,6 +189,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (isSupabaseAvailable() && supabase) {
         // Use real Supabase
+        console.log('Attempting Supabase signup with:', { email, redirectTo: `${window.location.origin}/auth/callback` });
+        
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -204,6 +206,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         console.log('Sign up successful:', data.user?.email);
+        console.log('User confirmation status:', data.user?.email_confirmed_at);
+        console.log('Session:', data.session);
+        
         return { error: null };
       } else {
         // Use local auth fallback

@@ -67,10 +67,18 @@ export const isSupabaseAvailable = () => hasRealCredentials && !forceLocalAuth
 if (typeof window !== 'undefined') {
   logSupabaseStatus()
   
+  console.log('Supabase Configuration Check:');
+  console.log('URL:', supabaseUrl);
+  console.log('Key (first 20 chars):', supabaseAnonKey?.substring(0, 20) + '...');
+  console.log('Has Real Credentials:', hasRealCredentials);
+  console.log('Force Local Auth:', forceLocalAuth);
+  
   if (!hasRealCredentials) {
     console.error('🚨 SUPABASE NOT CONFIGURED PROPERLY! 🚨')
     console.error('Authentication will NOT work until you set up real Supabase credentials.')
     console.error('See SUPABASE_SETUP_GUIDE.md for instructions.')
+  } else {
+    console.log('✅ Supabase configured correctly!');
   }
 }
 
