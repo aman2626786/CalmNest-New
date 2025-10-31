@@ -39,7 +39,8 @@ export function ProfileButton() {
     if (window.confirm('Are you sure you want to delete your account? This action is irreversible.')) {
       try {
         // Note: This fetch call might need to be adjusted if your backend expects a real UUID
-        const response = await fetch(`http://localhost:5001/api/profile/${user.id}`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+        const response = await fetch(`${apiUrl}/api/profile/${user.id}`, {
           method: 'DELETE',
         });
         

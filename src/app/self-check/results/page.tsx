@@ -144,7 +144,8 @@ function ResultsDisplay() {
             answers: answers,
         };
 
-        fetch('http://127.0.0.1:5001/api/test-submission', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+        fetch(`${apiUrl}/api/test-submission`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(result),

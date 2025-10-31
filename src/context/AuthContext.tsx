@@ -34,15 +34,21 @@ const localAuth = {
   signIn: async (email: string, password: string) => {
     try {
       const users = JSON.parse(localStorage.getItem('local_users') || '[]');
+      console.log('Local auth signin - stored users:', users);
+      console.log('Local auth signin - looking for email:', email);
+      
       const user = users.find((u: any) => u.email === email);
+      console.log('Local auth signin - found user:', user);
       
       if (!user) {
-        return { error: { message: 'User not found' } };
+        return { error: { message: 'User not found in local storage' } };
       }
       
       localStorage.setItem('current_user', JSON.stringify(user));
+      console.log('Local auth signin - success for:', email);
       return { error: null };
     } catch (error: any) {
+      console.error('Local auth signin error:', error);
       return { error: { message: error.message } };
     }
   },
@@ -209,11 +215,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('User confirmation status:', data.user?.email_confirmed_at);
         console.log('Session:', data.session);
         
-        // If user is created but not confirmed, set user state anyway for immediate access
-        if (data.user && !data.session) {
-          console.log('User created but not confirmed, setting user state for immediate access');
+        // If user is created, set user state and cookies for immediate access
+        if (data.user) {
+          console.log('User created, setting user state for immediate access');
           setUser(data.user);
-          setSession(null);
+          setSession(data.session);
+          
+          // Set authentication cookies for middleware
+          if (typeof document !== 'undefined') {
+            document.cookie = `local_auth=authenticated; path=/; max-age=86400`;
+            document.cookie = `userEmail=${data.user.email}; path=/; max-age=86400`;
+          }
+          
+          // Create user profile in database
+          try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+            const profileResponse = await fetch(`${apiUrl}/api/profile/${data.user.id}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: data.user.email,
+                full_name: userData?.full_name || '',
+                age: userData?.age || null,
+                gender: userData?.gender || null
+              })
+            });
+
+            if (profileResponse.ok) {
+              console.log('User profile created in database');
+            } else {
+              console.error('Failed to create user profile:', await profileResponse.text());
+            }
+          } catch (profileError) {
+            console.error('Error creating user profile:', profileError);
+          }
         }
         
         return { error: null };
@@ -240,6 +277,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (error) {
           console.error('Sign in error:', error);
+          
+          // For development: if email not confirmed, try to fetch user from database
+          if (error.message.includes('Email not confirmed') || error.message.includes('Invalid login credentials')) {
+            console.log('Supabase auth failed, trying database lookup for unconfirmed user');
+            
+            try {
+              // Try to fetch user profile from database
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+              const profileResponse = await fetch(`${apiUrl}/api/profile/email/${email}`);
+              
+              if (profileResponse.ok) {
+                const profileData = await profileResponse.json();
+                console.log('Found user profile in database:', profileData);
+                
+                // Create mock user object from database profile
+                const mockUser = {
+                  id: profileData.id,
+                  email: profileData.email,
+                  user_metadata: {
+                    full_name: profileData.full_name,
+                    age: profileData.age,
+                    gender: profileData.gender
+                  }
+                } as User;
+                
+                setUser(mockUser);
+                
+                // Set auth cookies for middleware
+                if (typeof document !== 'undefined') {
+                  document.cookie = `local_auth=authenticated; path=/; max-age=86400`;
+                  document.cookie = `userEmail=${profileData.email}; path=/; max-age=86400`;
+                }
+                
+                // Store in localStorage for backup
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('userEmail', profileData.email);
+                  localStorage.setItem('current_user', JSON.stringify({
+                    id: profileData.id,
+                    email: profileData.email,
+                    full_name: profileData.full_name,
+                    age: profileData.age,
+                    gender: profileData.gender
+                  }));
+                }
+                
+                console.log('Successfully signed in unconfirmed user via database lookup');
+                return { error: null };
+              } else {
+                console.log('User profile not found in database');
+              }
+            } catch (dbError) {
+              console.error('Database lookup failed:', dbError);
+            }
+            
+            return { error: { message: 'Email not confirmed. Please check your email for confirmation link.' } as AuthError };
+          }
+          
           return { error };
         }
 

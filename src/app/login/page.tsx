@@ -66,12 +66,12 @@ export default function LoginPage() {
       setMessageType('error');
     } else {
       setMessageType('success');
-      setMessage('Account created successfully! Redirecting to profile setup...');
+      setMessage('Account created successfully! Redirecting to home...');
       
-      // Auto redirect to profile setup
+      // Auto redirect to home page
       setTimeout(() => {
-        router.push('/profile-setup');
-      }, 2000);
+        router.push('/');
+      }, 1500);
     }
   };
 

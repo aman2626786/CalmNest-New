@@ -56,6 +56,12 @@ export async function middleware(req: NextRequest) {
     return res;
   }
 
+  // Skip middleware for public routes
+  if (publicRoutes.includes(pathname) || pathname === '/') {
+    console.log('Middleware: Public route, allowing access');
+    return res;
+  }
+
   // Check if the route requires authentication
   if (protectedRoutes.some(route => pathname.startsWith(route))) {
     let isAuthenticated = false;

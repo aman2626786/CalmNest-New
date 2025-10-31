@@ -53,9 +53,12 @@ export default function ClientLayoutWrapper({ children }: ClientLayoutWrapperPro
         onLoad={() => {
           if (window.voiceflow) {
             window.voiceflow.chat.load({
-              verify: { projectID: '68f116283303c3139e725906' },
+              verify: { projectID: '6904e195103327a086f77862' },
               url: 'https://general-runtime.voiceflow.com',
-              versionID: 'production'
+              versionID: 'production',
+              voice: {
+                url: "https://runtime-api.voiceflow.com"
+              }
             });
           }
         }}

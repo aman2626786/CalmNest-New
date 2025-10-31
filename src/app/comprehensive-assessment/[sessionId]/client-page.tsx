@@ -7,10 +7,10 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Activity, 
-  CheckCircle, 
-  ArrowRight, 
+import {
+  Activity,
+  CheckCircle,
+  ArrowRight,
   ArrowLeft,
   Brain,
   Camera,
@@ -48,7 +48,7 @@ const steps = [
   { id: 'introduction', title: 'Introduction', icon: Activity, description: 'Welcome and overview' },
   { id: 'phq9', title: 'PHQ-9', icon: Brain, description: 'Depression screening' },
   { id: 'gad7', title: 'GAD-7', icon: Heart, description: 'Anxiety assessment' },
-  { id: 'mood-groove', title: 'Mood Analysis', icon: Camera, description: 'Facial emotion detection' },
+  { id: 'mood-groove', title: 'Mood Groove', icon: Camera, description: 'AI-powered mood detection' },
   { id: 'additional', title: 'Additional Tests', icon: BarChart3, description: 'Resilience, stress, sleep' },
   { id: 'results', title: 'Results', icon: CheckCircle, description: 'Your comprehensive report' }
 ];
@@ -58,7 +58,7 @@ export default function AssessmentSessionClientPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const sessionId = params.sessionId as string;
-  
+
   const [assessmentData, setAssessmentData] = useState<AssessmentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -68,12 +68,12 @@ export default function AssessmentSessionClientPage() {
 
   useEffect(() => {
     const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
-    
+
     if (!authLoading && !user?.id && !storedEmail) {
       router.push('/login?redirectTo=' + encodeURIComponent('/comprehensive-assessment'));
       return;
     }
-    
+
     // Proceed with assessment if we have user or stored email
     if (user?.id || storedEmail) {
       fetchAssessmentData();
@@ -83,30 +83,30 @@ export default function AssessmentSessionClientPage() {
   const fetchAssessmentData = async () => {
     try {
       console.log('Initializing assessment session:', sessionId);
-      
+
       const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
       const userId = user?.id || storedEmail || 'temp_user';
-      
+
       // First, try to get existing assessment from database
       try {
         const response = await fetch(`${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}`);
-        
+
         if (response.ok) {
           const data = await response.json();
           console.log('Found existing assessment:', data);
           setAssessmentData(data);
-          
+
           // Set current step based on saved data
           const stepIndex = steps.findIndex(step => step.id === data.session.current_step);
           setCurrentStepIndex(stepIndex >= 0 ? stepIndex : 0);
-          
+
           console.log('Loaded existing assessment session');
           return;
         }
       } catch (error) {
         console.log('No existing assessment found, creating new one');
       }
-      
+
       // Create new assessment in database
       try {
         const createResponse = await fetch(`${API_CONFIG.BASE_URL}/api/comprehensive-assessment`, {
@@ -119,11 +119,11 @@ export default function AssessmentSessionClientPage() {
             sessionId: sessionId
           })
         });
-        
+
         if (createResponse.ok) {
           const createData = await createResponse.json();
           console.log('Created new assessment:', createData);
-          
+
           // Now fetch the created assessment
           const fetchResponse = await fetch(`${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}`);
           if (fetchResponse.ok) {
@@ -137,7 +137,7 @@ export default function AssessmentSessionClientPage() {
         }
       } catch (dbError) {
         console.error('Database error, falling back to local storage:', dbError);
-        
+
         // Fallback to mock data if database fails
         const mockData: AssessmentData = {
           assessment: {
@@ -154,12 +154,12 @@ export default function AssessmentSessionClientPage() {
             last_activity: new Date().toISOString()
           }
         };
-        
+
         setAssessmentData(mockData);
         setCurrentStepIndex(0);
         console.log('Using fallback mock data');
       }
-      
+
     } catch (error) {
       console.error('Error initializing assessment:', error);
       alert('Error initializing assessment. Please try again.');
@@ -172,26 +172,26 @@ export default function AssessmentSessionClientPage() {
   const updateStep = async (newStep: string) => {
     try {
       console.log('Updating step to:', newStep);
-      
+
       const newStepIndex = steps.findIndex(step => step.id === newStep);
       setCurrentStepIndex(newStepIndex);
-      
+
       if (assessmentData) {
         const updatedSessionData = {
           ...assessmentData.session.session_data,
           steps_completed: [...(assessmentData.session.session_data?.steps_completed || []), steps[currentStepIndex].id]
         };
-        
+
         const updatedData = {
           ...assessmentData,
-          session: { 
-            ...assessmentData.session, 
+          session: {
+            ...assessmentData.session,
             current_step: newStep,
             session_data: updatedSessionData
           }
         };
         setAssessmentData(updatedData);
-        
+
         // Save step update to database
         try {
           const response = await fetch(`${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/step`, {
@@ -204,7 +204,7 @@ export default function AssessmentSessionClientPage() {
               session_data: updatedSessionData
             })
           });
-          
+
           if (response.ok) {
             console.log('Step updated in database successfully');
           } else {
@@ -213,7 +213,7 @@ export default function AssessmentSessionClientPage() {
         } catch (dbError) {
           console.error('Database error while updating step:', dbError);
         }
-        
+
         // Save to localStorage as backup
         localStorage.setItem(`assessment_${sessionId}`, JSON.stringify(updatedData));
       }
@@ -237,18 +237,18 @@ export default function AssessmentSessionClientPage() {
   };
 
   const handleAssessmentComplete = async (stepId: string, data: any) => {
-    setAssessmentResults(prev => ({ ...prev, [stepId]: data }));
-    
+    setAssessmentResults((prev: any) => ({ ...prev, [stepId]: data }));
+
     // Save to database immediately
     try {
       const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
       const userId = user?.id || storedEmail || 'temp_user';
-      
+
       console.log(`Saving ${stepId} results to database:`, data);
-      
+
       let endpoint = '';
       let payload = {};
-      
+
       switch (stepId) {
         case 'phq9':
           endpoint = `${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/phq9`;
@@ -258,7 +258,7 @@ export default function AssessmentSessionClientPage() {
             answers: data.answers
           };
           break;
-          
+
         case 'gad7':
           endpoint = `${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/gad7`;
           payload = {
@@ -267,7 +267,7 @@ export default function AssessmentSessionClientPage() {
             answers: data.answers
           };
           break;
-          
+
         case 'moodGrove':
           endpoint = `${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/mood-groove`;
           payload = {
@@ -278,13 +278,13 @@ export default function AssessmentSessionClientPage() {
             expressions: data.expressions
           };
           break;
-          
+
         case 'additional':
           endpoint = `${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/additional`;
           payload = data;
           break;
       }
-      
+
       if (endpoint) {
         const response = await fetch(endpoint, {
           method: 'PUT',
@@ -293,7 +293,7 @@ export default function AssessmentSessionClientPage() {
           },
           body: JSON.stringify(payload)
         });
-        
+
         if (response.ok) {
           console.log(`${stepId} results saved to database successfully`);
         } else {
@@ -307,16 +307,16 @@ export default function AssessmentSessionClientPage() {
 
   const handleComplete = async () => {
     setIsCompleting(true);
-    
+
     try {
       console.log('Assessment Results:', assessmentResults);
-      
+
       // Generate comprehensive analysis
       const analysis = generateComprehensiveAnalysis(assessmentResults);
       console.log('Generated Analysis:', analysis);
-      
+
       setFinalAnalysis(analysis);
-      
+
       // Save completion to database
       try {
         const completeResponse = await fetch(`${API_CONFIG.BASE_URL}/api/comprehensive-assessment/${sessionId}/complete`, {
@@ -331,7 +331,7 @@ export default function AssessmentSessionClientPage() {
             recommendations: analysis.recommendations
           })
         });
-        
+
         if (completeResponse.ok) {
           console.log('Assessment completed and saved to database');
         } else {
@@ -340,7 +340,7 @@ export default function AssessmentSessionClientPage() {
       } catch (dbError) {
         console.error('Database error while completing assessment:', dbError);
       }
-      
+
       // Also save to localStorage as backup
       const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
       const completedAssessment = {
@@ -350,16 +350,16 @@ export default function AssessmentSessionClientPage() {
         results: assessmentResults,
         analysis: analysis
       };
-      
+
       localStorage.setItem(`completed_assessment_${sessionId}`, JSON.stringify(completedAssessment));
       localStorage.setItem('latest_assessment', JSON.stringify(completedAssessment));
-      
+
       console.log('Assessment completed and saved locally as backup');
-      
+
       // Move to results step
       setCurrentStepIndex(steps.length - 1);
       updateStep('results');
-      
+
     } catch (error) {
       console.error('Error completing assessment:', error);
       alert('Error completing assessment. Please try again.');
@@ -401,7 +401,7 @@ export default function AssessmentSessionClientPage() {
   }
 
   const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
-  
+
   if (!user && !storedEmail) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -453,15 +453,14 @@ export default function AssessmentSessionClientPage() {
             const Icon = step.icon;
             const isCompleted = index < currentStepIndex;
             const isCurrent = index === currentStepIndex;
-            
+
             return (
               <div
                 key={step.id}
-                className={`p-3 rounded-lg text-center transition-all ${
-                  isCompleted ? 'bg-emerald-500/20 text-emerald-300' :
-                  isCurrent ? 'bg-purple-500/20 text-purple-300' :
-                  'bg-gray-700/50 text-gray-500'
-                }`}
+                className={`p-3 rounded-lg text-center transition-all ${isCompleted ? 'bg-emerald-500/20 text-emerald-300' :
+                    isCurrent ? 'bg-purple-500/20 text-purple-300' :
+                      'bg-gray-700/50 text-gray-500'
+                  }`}
               >
                 <Icon className="w-6 h-6 mx-auto mb-1" />
                 <div className="text-xs font-medium">{step.title}</div>
@@ -491,7 +490,7 @@ export default function AssessmentSessionClientPage() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-white">Welcome to Your Comprehensive Assessment</h3>
                   <p className="text-gray-300">
-                    This assessment will take approximately 15-20 minutes and includes multiple validated tools 
+                    This assessment will take approximately 15-20 minutes and includes multiple validated tools
                     to provide you with a complete picture of your mental wellness.
                   </p>
                   <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
@@ -508,33 +507,33 @@ export default function AssessmentSessionClientPage() {
               )}
 
               {currentStep.id === 'phq9' && (
-                <PHQ9Component 
+                <PHQ9Component
                   onComplete={(data) => handleAssessmentComplete('phq9', data)}
                   onNext={handleNext}
                 />
               )}
 
               {currentStep.id === 'gad7' && (
-                <GAD7Component 
+                <GAD7Component
                   onComplete={(data) => handleAssessmentComplete('gad7', data)}
                   onNext={handleNext}
                 />
               )}
 
               {currentStep.id === 'mood-groove' && (
-                <MoodGroveComponent 
+                <MoodGroveComponent
                   onComplete={(data) => handleAssessmentComplete('moodGrove', data)}
                   onNext={handleNext}
                 />
               )}
 
               {currentStep.id === 'additional' && (
-                <AdditionalAssessmentsComponent 
+                <AdditionalAssessmentsComponent
                   onComplete={(data) => {
                     handleAssessmentComplete('additional', data);
                     setTimeout(() => handleComplete(), 1000);
                   }}
-                  onNext={() => {}}
+                  onNext={() => { }}
                 />
               )}
 
@@ -563,12 +562,11 @@ export default function AssessmentSessionClientPage() {
                         <Card className="bg-gray-700/50 border-gray-600">
                           <CardContent className="p-4 text-center">
                             <h4 className="font-semibold text-white mb-2">Overall Severity</h4>
-                            <div className={`text-2xl font-bold mb-1 ${
-                              finalAnalysis.overall_severity === 'Minimal' ? 'text-green-400' :
-                              finalAnalysis.overall_severity === 'Mild' ? 'text-yellow-400' :
-                              finalAnalysis.overall_severity === 'Moderate' ? 'text-orange-400' :
-                              'text-red-400'
-                            }`}>
+                            <div className={`text-2xl font-bold mb-1 ${finalAnalysis.overall_severity === 'Minimal' ? 'text-green-400' :
+                                finalAnalysis.overall_severity === 'Mild' ? 'text-yellow-400' :
+                                  finalAnalysis.overall_severity === 'Moderate' ? 'text-orange-400' :
+                                    'text-red-400'
+                              }`}>
                               {finalAnalysis.overall_severity}
                             </div>
                           </CardContent>
@@ -577,11 +575,10 @@ export default function AssessmentSessionClientPage() {
                         <Card className="bg-gray-700/50 border-gray-600">
                           <CardContent className="p-4 text-center">
                             <h4 className="font-semibold text-white mb-2">Risk Level</h4>
-                            <div className={`text-2xl font-bold mb-1 ${
-                              finalAnalysis.risk_level === 'Low' ? 'text-green-400' :
-                              finalAnalysis.risk_level === 'Medium' ? 'text-yellow-400' :
-                              'text-red-400'
-                            }`}>
+                            <div className={`text-2xl font-bold mb-1 ${finalAnalysis.risk_level === 'Low' ? 'text-green-400' :
+                                finalAnalysis.risk_level === 'Medium' ? 'text-yellow-400' :
+                                  'text-red-400'
+                              }`}>
                               {finalAnalysis.risk_level}
                             </div>
                           </CardContent>

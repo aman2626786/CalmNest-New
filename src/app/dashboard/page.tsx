@@ -135,6 +135,7 @@ export default function DashboardPage() {
         result.anxiety.toFixed(2),
       ]);
 
+      
       (doc as any).autoTable({
         startY: yPosition,
         head: [['Date', 'Mood', 'Confidence', 'Depression', 'Anxiety']],

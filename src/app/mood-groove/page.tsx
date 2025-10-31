@@ -286,7 +286,8 @@ const MoodGroovePage = () => {
     if (!session?.user?.id) return;
     
     try {
-      const response = await fetch(`http://127.0.0.1:5001/api/mood-groove/history/${session.user.id}`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${apiUrl}/api/mood-groove/history/${session.user.id}`);
       if (response.ok) {
         const history = await response.json();
         setMoodHistory(history);
@@ -361,7 +362,8 @@ const MoodGroovePage = () => {
         expressions: expressions,
       };
 
-      const response = await fetch('http://127.0.0.1:5001/api/mood-groove', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${apiUrl}/api/mood-groove`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(moodGrooveResult),

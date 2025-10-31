@@ -66,13 +66,14 @@ function calculateOverallSeverity(
     else severityScores.push(4);
   }
   
-  // Mood Grove severity (based on depression/anxiety indicators)
+  // Mood Groove severity (based on depression/anxiety indicators on 1-10 scale)
   if (moodGrove) {
     const avgMoodScore = (moodGrove.depression + moodGrove.anxiety) / 2;
-    if (avgMoodScore <= 20) severityScores.push(1);
-    else if (avgMoodScore <= 40) severityScores.push(2);
-    else if (avgMoodScore <= 60) severityScores.push(3);
-    else severityScores.push(4);
+    if (avgMoodScore <= 2) severityScores.push(1);
+    else if (avgMoodScore <= 4) severityScores.push(2);
+    else if (avgMoodScore <= 6) severityScores.push(3);
+    else if (avgMoodScore <= 8) severityScores.push(4);
+    else severityScores.push(5);
   }
   
   const avgSeverity = severityScores.reduce((sum, score) => sum + score, 0) / severityScores.length;
@@ -97,8 +98,8 @@ function calculateRiskLevel(
   // High GAD-7 score
   if (gad7 && gad7.score >= 15) riskFactors++;
   
-  // High mood indicators
-  if (moodGrove && (moodGrove.depression >= 60 || moodGrove.anxiety >= 60)) riskFactors++;
+  // High mood indicators (on 1-10 scale)
+  if (moodGrove && (moodGrove.depression >= 7 || moodGrove.anxiety >= 7)) riskFactors++;
   
   if (riskFactors >= 2) return "High";
   if (riskFactors === 1) return "Medium";
@@ -180,39 +181,43 @@ Interpretation: `;
 
   prompt += `
 
-=== MOOD ANALYSIS (AI-Powered Facial Recognition) ===`;
+=== MOOD GROOVE ANALYSIS (AI-Powered Emotion Detection) ===`;
 
   if (moodGrove) {
     prompt += `
 Dominant Emotion Detected: ${moodGrove.dominantMood.charAt(0).toUpperCase() + moodGrove.dominantMood.slice(1)}
 Analysis Confidence: ${(moodGrove.confidence * 100).toFixed(1)}%
-Depression Indicators: ${moodGrove.depression.toFixed(1)}%
-Anxiety Indicators: ${moodGrove.anxiety.toFixed(1)}%
+Depression Indicators: ${moodGrove.depression.toFixed(1)}/10
+Anxiety Indicators: ${moodGrove.anxiety.toFixed(1)}/10
 
-Facial Expression Analysis: `;
+Mood Groove Analysis: `;
     
     if (moodGrove.dominantMood === 'happy') {
-      prompt += "Positive emotional state detected. Facial expressions suggest good mood and emotional well-being.";
+      prompt += "Positive emotional state detected. Your mood analysis suggests good emotional well-being and positive outlook.";
     } else if (moodGrove.dominantMood === 'sad') {
-      prompt += "Sadness detected in facial expressions. This aligns with potential depressive symptoms.";
-    } else if (moodGrove.dominantMood === 'fearful') {
-      prompt += "Anxiety-related expressions detected. Facial analysis suggests heightened stress or worry.";
+      prompt += "Sadness detected in your current mood state. This aligns with potential depressive symptoms and may indicate need for emotional support.";
+    } else if (moodGrove.dominantMood === 'anxious') {
+      prompt += "Anxiety-related mood patterns detected. Your emotional state suggests heightened stress or worry that may benefit from relaxation techniques.";
     } else if (moodGrove.dominantMood === 'angry') {
-      prompt += "Irritability or frustration detected. May indicate stress, depression, or anxiety manifestation.";
+      prompt += "Irritability or frustration detected in your mood analysis. This may indicate stress, depression, or anxiety manifestation.";
+    } else if (moodGrove.dominantMood === 'stressed') {
+      prompt += "High stress levels detected in your mood analysis. This suggests significant pressure or overwhelm that requires attention.";
+    } else if (moodGrove.dominantMood === 'content') {
+      prompt += "Content emotional state detected. Your mood analysis suggests stable and generally positive emotional well-being.";
     } else {
-      prompt += "Neutral emotional expression. Facial analysis suggests stable but possibly subdued emotional state.";
+      prompt += "Neutral emotional state detected. Your mood analysis suggests stable but possibly subdued emotional state.";
     }
     
     // Correlation analysis
     const moodPhq9Correlation = phq9 ? 
-      (moodGrove.depression > 40 && phq9.score > 10) ? "Strong correlation between facial analysis and PHQ-9 results." :
-      (moodGrove.depression > 30 || phq9.score > 5) ? "Moderate correlation between mood analysis and depression screening." :
-      "Facial analysis and PHQ-9 results show minimal correlation." : "";
+      (moodGrove.depression > 6 && phq9.score > 10) ? "Strong correlation between Mood Groove analysis and PHQ-9 depression screening." :
+      (moodGrove.depression > 4 || phq9.score > 5) ? "Moderate correlation between Mood Groove analysis and depression screening." :
+      "Mood Groove analysis and PHQ-9 results show minimal correlation." : "";
     
     const moodGad7Correlation = gad7 ?
-      (moodGrove.anxiety > 40 && gad7.score > 10) ? "Strong correlation between facial analysis and GAD-7 results." :
-      (moodGrove.anxiety > 30 || gad7.score > 5) ? "Moderate correlation between mood analysis and anxiety screening." :
-      "Facial analysis and GAD-7 results show minimal correlation." : "";
+      (moodGrove.anxiety > 6 && gad7.score > 10) ? "Strong correlation between Mood Groove analysis and GAD-7 anxiety screening." :
+      (moodGrove.anxiety > 4 || gad7.score > 5) ? "Moderate correlation between Mood Groove analysis and anxiety screening." :
+      "Mood Groove analysis and GAD-7 results show minimal correlation." : "";
     
     if (moodPhq9Correlation) prompt += `\n${moodPhq9Correlation}`;
     if (moodGad7Correlation) prompt += `\n${moodGad7Correlation}`;
