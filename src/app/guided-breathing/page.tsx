@@ -331,8 +331,12 @@ const ExerciseCard = ({ exercise, onStart }: ExerciseCardProps) => {
       </CardHeader>
       <CardContent className="flex-grow space-y-4">
         <div>
-          <h4 className="font-semibold text-sm text-blue-400 mb-2" suppressHydrationWarning>
-            {isClient && ready ? t('howItWorks', { defaultValue: 'How it Works' }) : 'How it Works'}
+          <h4 className="font-semibold text-sm text-blue-400 mb-2">
+            <HydrationSafeTranslation 
+              translationKey="howItWorks" 
+              fallbackText="How it Works"
+              namespace="exercises"
+            />
           </h4>
           <p className="text-sm text-gray-300" suppressHydrationWarning>
             {getScience()}

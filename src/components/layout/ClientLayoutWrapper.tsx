@@ -7,6 +7,7 @@ import { ResultsProvider } from '@/context/ResultsContext';
 import { UserProfileProvider } from '@/context/UserProfileContext';
 import { VoiceflowContextUpdater } from '@/components/VoiceflowContextUpdater';
 import { Header } from '@/components/layout/Header';
+import { TitleUpdater } from '@/components/TitleUpdater';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from '@/lib/supabase/client';
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -37,6 +38,7 @@ export default function ClientLayoutWrapper({ children }: ClientLayoutWrapperPro
               <I18nProvider>
                 <MoodProvider>
                   <ResultsProvider>
+                    <TitleUpdater />
                     <VoiceflowContextUpdater />
                     <Header />
                     <main className="pt-20">{children}</main>

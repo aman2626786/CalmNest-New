@@ -1,4 +1,4 @@
-# Mental Health Detector - Backend Manual
+# CalmNest - Backend Manual
 
 ## 🚀 Backend Start Karne Ka Complete Guide
 
@@ -10,7 +10,7 @@
 
 ## 📁 Project Structure
 ```
-Mental Health Detector/
+CalmNest/
 ├── flask-backend/          # Backend folder
 │   ├── app.py              # Main Flask application
 │   ├── .env                # Environment variables
@@ -25,7 +25,7 @@ Mental Health Detector/
 
 ### 1.1 Navigate to Backend Folder
 ```bash
-cd "E:\Mental Health Detector\flask-backend"
+cd "E:\CalmNest\flask-backend"
 ```
 
 ### 1.2 Check Python Installation
@@ -79,19 +79,19 @@ DATABASE_URL=sqlite:///mental_health.db
 
 ### Method 1: Direct Python Command
 ```bash
-cd "E:\Mental Health Detector\flask-backend"
+cd "E:\CalmNest\flask-backend"
 python app.py
 ```
 
 ### Method 2: With Environment Variable (PowerShell)
 ```powershell
-cd "E:\Mental Health Detector\flask-backend"
+cd "E:\CalmNest\flask-backend"
 $env:DATABASE_URL="sqlite:///mental_health.db"; python app.py
 ```
 
 ### Method 3: With Environment Variable (CMD)
 ```cmd
-cd "E:\Mental Health Detector\flask-backend"
+cd "E:\CalmNest\flask-backend"
 set DATABASE_URL=sqlite:///mental_health.db && python app.py
 ```
 
@@ -126,7 +126,7 @@ curl http://localhost:5001/api/profile/email/devesh9667735720@gmail.com
 
 ### 5.1 Run User Creation Script
 ```bash
-cd "E:\Mental Health Detector\flask-backend"
+cd "E:\CalmNest\flask-backend"
 python create_test_user.py
 ```
 
@@ -208,18 +208,18 @@ $env:DATABASE_URL="sqlite:///mental_health.db"; python app.py
 
 ### Start Backend (Quick)
 ```bash
-cd "E:\Mental Health Detector\flask-backend" && python app.py
+cd "E:\CalmNest\flask-backend" && python app.py
 ```
 
 ### Start with SQLite
 ```powershell
-cd "E:\Mental Health Detector\flask-backend"
+cd "E:\CalmNest\flask-backend"
 $env:DATABASE_URL="sqlite:///mental_health.db"; python app.py
 ```
 
 ### Create Users
 ```bash
-cd "E:\Mental Health Detector\flask-backend" && python create_test_user.py
+cd "E:\CalmNest\flask-backend" && python create_test_user.py
 ```
 
 ### Stop Backend

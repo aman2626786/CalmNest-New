@@ -180,11 +180,23 @@ export default function GuidedBreathingPage() {
             <CardContent className="flex-grow">
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-semibold text-sm text-primary">{t('howItWorks')}</h4>
+                  <h4 className="font-semibold text-sm text-primary">
+                    <HydrationSafeTranslation 
+                      translationKey="howItWorks" 
+                      fallbackText="How it Works"
+                      namespace="exercises"
+                    />
+                  </h4>
                   <p className="text-sm text-muted-foreground">{t(`${exercise.id}.science`)}</p>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm text-primary">{t('steps')}</h4>
+                  <h4 className="font-semibold text-sm text-primary">
+                    <HydrationSafeTranslation 
+                      translationKey="steps" 
+                      fallbackText="Steps"
+                      namespace="exercises"
+                    />
+                  </h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground">
                     {Array.isArray(t(`${exercise.id}.steps`, { returnObjects: true })) 
                       ? (t(`${exercise.id}.steps`, { returnObjects: true }) as string[]).map((step, i) => (
