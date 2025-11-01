@@ -1,24 +1,30 @@
 # Dependencies
 node_modules/
-CalmNest/node_modules/
 flask-backend/__pycache__/
-flask-backend/*.pyc
-flask-backend/venv/
-flask-backend/.env
-
-# Next.js
-CalmNest/.next/
-CalmNest/out/
-CalmNest/build/
-CalmNest/dist/
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
 
 # Environment variables
 .env
 .env.local
+.env.production
 .env.development.local
 .env.test.local
 .env.production.local
-CalmNest/.env.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+mental_health.db
+
+# Build outputs
+.next/
+out/
+build/
+dist/
 
 # Logs
 *.log
@@ -40,6 +46,7 @@ coverage/
 .nyc_output
 
 # Dependency directories
+node_modules/
 jspm_packages/
 
 # Optional npm cache directory
@@ -69,7 +76,6 @@ jspm_packages/
 
 # Next.js build output
 .next
-out
 
 # Nuxt.js build / generate output
 .nuxt
@@ -103,41 +109,14 @@ temp/
 ehthumbs.db
 Thumbs.db
 
-# Python
-*.pyc
-__pycache__/
-.Python
-build/
-develop-eggs/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# Python virtual environment
+venv/
+env/
+ENV/
 
-# Flask
+# Flask instance folder
 instance/
-.webassets-cache
 
-# Database
-*.db
-*.sqlite3
-
-# IDE
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# Backup files
-*.bak
-*.backup
-# Local Netlify folder
-.netlify
+# Test files
+test_*.py
+*_test.py

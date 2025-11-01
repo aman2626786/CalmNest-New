@@ -14,8 +14,27 @@ import os
 allowed_origins = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:3001').split(',')
 CORS(app, origins=allowed_origins)
 
-# Database Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://postgres:%2A13579%2ASharma@db.lrvmsulryjwgrqwniltm.supabase.co:5432/postgres')
+# Database Configuration with fallback
+try:
+    # Try to use environment DATABASE_URL first
+    database_url = os.getenv('DATABASE_URL', 'postgresql://postgres:%2A13579%2ASharma@db.lrvmsulryjwgrqwniltm.supabase.co:5432/postgres')
+    
+    # Test connection for Supabase URLs
+    if 'supabase.co' in database_url:
+        import socket
+        hostname = 'db.lrvmsulryjwgrqwniltm.supabase.co'
+        try:
+            socket.gethostbyname(hostname)
+            print(f"✅ DNS resolution successful for {hostname}")
+        except socket.gaierror:
+            print(f"❌ DNS resolution failed for {hostname}, falling back to SQLite")
+            database_url = 'sqlite:///mental_health.db'
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"Using database: {database_url.split('@')[0] if '@' in database_url else database_url}")
+except Exception as e:
+    print(f"Database configuration error: {e}")
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mental_health.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True

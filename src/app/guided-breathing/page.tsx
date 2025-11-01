@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { X, Wind, Brain, Heart, Moon, PersonStanding, Eye, Sparkles, Clock, Star, Zap, Sun } from 'lucide-react';
@@ -10,6 +10,40 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { HydrationSafeTranslation } from '@/components/common/HydrationSafeTranslation';
+
+// TypeScript interfaces
+interface BreathingPhase {
+  instruction: string;
+  duration: number;
+  animation: string;
+}
+
+interface BreathingExercise {
+  id: string;
+  titleKey: string;
+  descriptionKey: string;
+  scienceKey: string;
+  icon: JSX.Element;
+  difficulty: string;
+  color: string;
+  cycle: BreathingPhase[];
+  steps?: string[];
+}
+
+interface ExerciseCardProps {
+  exercise: BreathingExercise;
+  onStart: (exercise: BreathingExercise) => void;
+}
+
+interface ExerciseGridProps {
+  exercises: BreathingExercise[];
+  onStart: (exercise: BreathingExercise) => void;
+}
+
+interface BreathingAnimationProps {
+  exercise: BreathingExercise;
+  onFinish: () => void;
+}
 
 // Breathing Exercises Data
 const getBreathingExercises = () => [
@@ -97,7 +131,7 @@ const getBreathingExercises = () => [
 ];
 
 // Breathing Animation Component
-const BreathingAnimation = ({ exercise, onFinish }) => {
+const BreathingAnimation = ({ exercise, onFinish }: BreathingAnimationProps) => {
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [cycleCount, setCycleCount] = useState(0);
   const [timeLeft, setTimeLeft] = useState(exercise.cycle[0]?.duration || 4);
@@ -110,7 +144,7 @@ const BreathingAnimation = ({ exercise, onFinish }) => {
     if (!isActive) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft((prev: number) => {
         if (prev <= 1) {
           const nextPhaseIndex = (phaseIndex + 1) % exercise.cycle.length;
 
@@ -134,12 +168,12 @@ const BreathingAnimation = ({ exercise, onFinish }) => {
     return () => clearInterval(timer);
   }, [phaseIndex, cycleCount, isActive, exercise.cycle, onFinish]);
 
-  const circleVariants = {
+  const circleVariants: Variants = {
     initial: { scale: 1, opacity: 0.8 },
     inhale: { scale: 1.5, transition: { duration: currentPhase?.duration || 4, ease: 'easeInOut' } },
     exhale: { scale: 0.75, transition: { duration: currentPhase?.duration || 4, ease: 'easeInOut' } },
     hold: { scale: 1.2, transition: { duration: currentPhase?.duration || 4, ease: 'easeInOut' } },
-    squeeze: { scale: 0.9, opacity: 1, transition: { duration: 0.5, repeat: Infinity, repeatType: 'mirror' } },
+    squeeze: { scale: 0.9, opacity: 1, transition: { duration: 0.5, repeat: Infinity, repeatType: 'mirror' as const } },
     release: { scale: 1, opacity: 0.8, transition: { duration: 2, ease: 'easeOut' } },
     observe: { scale: 1, opacity: 0.8, transition: { duration: 1, ease: 'easeInOut' } },
     'child-pose': { scale: 0.7, opacity: 0.7, transition: { duration: currentPhase?.duration || 3, ease: 'easeInOut' } },
@@ -201,8 +235,8 @@ const BreathingAnimation = ({ exercise, onFinish }) => {
 };
 
 // Hardcoded fallbacks for SSR
-const getHardcodedTitle = (id) => {
-  const titles = {
+const getHardcodedTitle = (id: string): string => {
+  const titles: Record<string, string> = {
     'box-breathing': 'Box Breathing',
     '478-breathing': '4-7-8 Breathing',
     '54321-grounding': '5-4-3-2-1 Grounding',
@@ -212,8 +246,8 @@ const getHardcodedTitle = (id) => {
   return titles[id] || 'Breathing Exercise';
 };
 
-const getHardcodedDescription = (id) => {
-  const descriptions = {
+const getHardcodedDescription = (id: string): string => {
+  const descriptions: Record<string, string> = {
     'box-breathing': 'A simple technique to calm your nervous system and reduce stress.',
     '478-breathing': 'Known as the "relaxing breath," it helps with anxiety and sleep.',
     '54321-grounding': 'Pulls you out of anxious thoughts by focusing on your senses.',
@@ -223,8 +257,8 @@ const getHardcodedDescription = (id) => {
   return descriptions[id] || 'A breathing exercise to help you relax.';
 };
 
-const getHardcodedScience = (id) => {
-  const science = {
+const getHardcodedScience = (id: string): string => {
+  const science: Record<string, string> = {
     'box-breathing': 'Evens out breath pace, stimulating the vagus nerve to lower heart rate and blood pressure.',
     '478-breathing': 'Acts as a natural tranquilizer for the nervous system by increasing oxygen in the bloodstream.',
     '54321-grounding': 'Redirects focus from internal distress to the external environment, interrupting overwhelming thoughts.',
@@ -234,8 +268,8 @@ const getHardcodedScience = (id) => {
   return science[id] || 'Helps regulate breathing and reduce stress.';
 };
 
-const getHardcodedSteps = (id) => {
-  const steps = {
+const getHardcodedSteps = (id: string): string[] => {
+  const steps: Record<string, string[]> = {
     'box-breathing': ['Inhale for 4s', 'Hold for 4s', 'Exhale for 4s', 'Hold for 4s'],
     '478-breathing': ['Inhale for 4s', 'Hold for 7s', 'Exhale for 8s'],
     '54321-grounding': ['See 5 things', 'Feel 4 things', 'Hear 3 things', 'Smell 2 things', 'Taste 1 thing'],
@@ -246,7 +280,7 @@ const getHardcodedSteps = (id) => {
 };
 
 // Exercise Card Component
-const ExerciseCard = ({ exercise, onStart }) => {
+const ExerciseCard = ({ exercise, onStart }: ExerciseCardProps) => {
   const { t, ready } = useTranslation('exercises');
   const [isClient, setIsClient] = useState(false);
 
@@ -310,7 +344,7 @@ const ExerciseCard = ({ exercise, onStart }) => {
             {isClient && ready ? t('steps', { defaultValue: 'Steps' }) : 'Steps'}
           </h4>
           <ul className="space-y-1">
-            {getSteps().slice(0, 3).map((step, i) => (
+            {getSteps().slice(0, 3).map((step: string, i: number) => (
               <li key={i} className="text-sm text-gray-300 flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-green-400 rounded-full flex-shrink-0" />
                 {step}
@@ -335,9 +369,9 @@ const ExerciseCard = ({ exercise, onStart }) => {
 };
 
 // Exercise Grid Component
-const ExerciseGrid = ({ exercises, onStart }) => (
+const ExerciseGrid = ({ exercises, onStart }: ExerciseGridProps) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {exercises.map((exercise) => (
+    {exercises.map((exercise: BreathingExercise) => (
       <ExerciseCard key={exercise.id} exercise={exercise} onStart={onStart} />
     ))}
   </div>
@@ -345,7 +379,7 @@ const ExerciseGrid = ({ exercises, onStart }) => (
 
 // Main Component
 export default function GuidedBreathingPage() {
-  const [activeExercise, setActiveExercise] = useState(null);
+  const [activeExercise, setActiveExercise] = useState<BreathingExercise | null>(null);
   const { user } = useAuth();
   const { t, ready } = useTranslation('exercises');
   const [isClient, setIsClient] = useState(false);
@@ -358,7 +392,7 @@ export default function GuidedBreathingPage() {
   const handleFinish = () => {
     if (!activeExercise) return;
 
-    const totalDuration = activeExercise.cycle.reduce((sum, phase) => sum + phase.duration, 0) * 5; // 5 cycles
+    const totalDuration = activeExercise.cycle.reduce((sum: number, phase: BreathingPhase) => sum + phase.duration, 0) * 5; // 5 cycles
 
     if (user?.id) {
       console.log("Saving exercise:", {
